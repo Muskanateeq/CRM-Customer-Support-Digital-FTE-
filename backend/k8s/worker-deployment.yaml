@@ -1,0 +1,99 @@
+# TaskNest Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tasknest-worker
+  namespace: tasknest
+  labels:
+    app: tasknest
+    component: worker
+spec:
+  replicas: 2  # Run 2 worker instances
+  selector:
+    matchLabels:
+      app: tasknest
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: tasknest
+        component: worker
+    spec:
+      containers:
+      - name: worker
+        image: your-registry/tasknest-worker:latest
+        imagePullPolicy: Always
+        env:
+        # Load from ConfigMap
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: ENVIRONMENT
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: POSTGRES_PORT
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: POSTGRES_DB
+        - name: KAFKA_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: KAFKA_ENABLED
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: KAFKA_BOOTSTRAP_SERVERS
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: LOG_LEVEL
+        - name: WORKER_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: tasknest-config
+              key: WORKER_POOL_SIZE
+
+        # Load from Secret
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: tasknest-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tasknest-secrets
+              key: POSTGRES_PASSWORD
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: tasknest-secrets
+              key: DATABASE_URL
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: tasknest-secrets
+              key: OPENAI_API_KEY
+
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+      restartPolicy: Always

@@ -1,0 +1,43 @@
+# ZooKeeper Services
+---
+# Headless service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-headless
+  namespace: tasknest
+  labels:
+    app: zookeeper
+spec:
+  clusterIP: None
+  selector:
+    app: zookeeper
+  ports:
+  - name: client
+    port: 2181
+    targetPort: 2181
+  - name: follower
+    port: 2888
+    targetPort: 2888
+  - name: election
+    port: 3888
+    targetPort: 3888
+
+---
+# Regular service for client access
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+  namespace: tasknest
+  labels:
+    app: zookeeper
+spec:
+  type: ClusterIP
+  selector:
+    app: zookeeper
+  ports:
+  - name: client
+    port: 2181
+    targetPort: 2181
+    protocol: TCP

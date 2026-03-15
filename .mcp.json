@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "neon": {
+      "type": "http",
+      "url": "https://mcp.neon.tech/mcp",
+      "headers": {
+        "Authorization": "Bearer napi_znk0ur17a71u812jug1apiaufc9y2gq0fgpxn4cto5t9vbavldl0pbcisq49a8s3"
+      }
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-3c159a1c-cf79-47af-9059-f610b0e64cbe"
+      }
+    }
+  }
+}

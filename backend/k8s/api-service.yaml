@@ -1,0 +1,20 @@
+# TaskNest API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: tasknest-api
+  namespace: tasknest
+  labels:
+    app: tasknest
+    component: api
+spec:
+  type: ClusterIP
+  selector:
+    app: tasknest
+    component: api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  sessionAffinity: None

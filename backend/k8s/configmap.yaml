@@ -1,0 +1,39 @@
+# ConfigMap for TaskNest configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tasknest-config
+  namespace: tasknest
+data:
+  # Environment
+  ENVIRONMENT: "production"
+
+  # Database
+  POSTGRES_HOST: "your-neon-host.neon.tech"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "tasknest"
+  DB_POOL_MIN_SIZE: "2"
+  DB_POOL_MAX_SIZE: "10"
+
+  # Kafka
+  KAFKA_ENABLED: "true"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+
+  # OpenAI
+  AGENT_MODEL: "gpt-4o"
+
+  # Channels
+  GMAIL_ENABLED: "false"
+  WHATSAPP_ENABLED: "false"
+  WEBFORM_ENABLED: "true"
+
+  # API
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_CORS_ORIGINS: "https://tasknest.com"
+
+  # Logging
+  LOG_LEVEL: "INFO"
+
+  # Worker
+  WORKER_POOL_SIZE: "4"

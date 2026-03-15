@@ -1,0 +1,553 @@
+/**
+ * Settings Page Styles
+ * Dark Golden Theme - Modern SaaS Design
+ */
+
+.settings-page {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.settings-header {
+    margin-bottom: 2rem;
+}
+
+.settings-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+}
+
+.settings-subtitle {
+    font-size: 1rem;
+    color: #E0E0E0;
+}
+
+/* Container */
+.settings-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+}
+
+/* Sidebar */
+.settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.settings-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    color: #E0E0E0;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.settings-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+}
+
+.settings-tab.active {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #d4af37;
+    color: #d4af37;
+}
+
+.tab-icon {
+    font-size: 1.25rem;
+}
+
+.tab-label {
+    flex: 1;
+}
+
+/* Content */
+.settings-content {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.settings-section {
+    max-width: 700px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+}
+
+.section-description {
+    font-size: 0.9375rem;
+    color: #E0E0E0;
+    margin-bottom: 2rem;
+}
+
+/* Settings Group */
+.settings-group {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.setting-label {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 0.75rem;
+}
+
+.setting-hint {
+    font-size: 0.8125rem;
+    color: #CCCCCC;
+    margin-top: 0.5rem;
+}
+
+/* Input Fields */
+.setting-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 0.9375rem;
+    transition: all 0.3s ease;
+}
+
+.setting-input:focus {
+    outline: none;
+    border-color: #d4af37;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.setting-input.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.setting-input.small {
+    width: 80px;
+}
+
+/* Select */
+.setting-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.setting-select:focus {
+    outline: none;
+    border-color: #d4af37;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.setting-select option {
+    background: #1A1A1A;
+    color: #FFFFFF;
+    padding: 0.5rem;
+}
+
+/* Toggle Switch */
+.setting-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 28px;
+    transition: all 0.3s ease;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background: #666666;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+    background: #d4af37;
+}
+
+/* Option Buttons */
+.setting-options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.option-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #E0E0E0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-btn:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+}
+
+.option-btn.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    border-color: #d4af37;
+}
+
+.option-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* DND Hours */
+.dnd-hours {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dnd-hours > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dnd-hours label {
+    font-size: 0.8125rem;
+    color: #E0E0E0;
+}
+
+/* Buttons */
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: rgba(212, 175, 55, 0.15);
+    border: 2px solid #d4af37;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(212, 175, 55, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background: rgba(239, 68, 68, 0.15);
+    border: 2px solid #EF4444;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.25);
+    transform: translateY(-2px);
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Danger Zone */
+.danger-zone {
+    background: rgba(239, 68, 68, 0.05);
+    border: 2px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+/* About Section */
+.about-card {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.about-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #d4af37, #C28608);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.about-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+}
+
+.about-version {
+    font-size: 0.875rem;
+    color: #d4af37;
+    margin-bottom: 1rem;
+}
+
+.about-description {
+    font-size: 0.9375rem;
+    color: #E0E0E0;
+    line-height: 1.6;
+}
+
+.about-links {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.about-link {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 8px;
+    color: #d4af37;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.about-link:hover {
+    background: rgba(212, 175, 55, 0.1);
+    transform: translateY(-2px);
+}
+
+.about-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.about-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.1);
+    border-radius: 8px;
+}
+
+.about-item strong {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.about-item span {
+    color: #E0E0E0;
+}
+
+.about-footer {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.about-footer p {
+    color: #CCCCCC;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
+}
+
+/* Input with Button */
+.input-with-button {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.input-with-button .setting-input {
+    flex: 1;
+}
+
+.input-with-button .btn-secondary {
+    flex-shrink: 0;
+}
+
+/* Loading and Error States */
+.settings-loading,
+.settings-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    font-size: 1.125rem;
+    color: #E0E0E0;
+}
+
+.settings-error {
+    color: #EF4444;
+}
+
+/* Danger Hint */
+.setting-hint.danger {
+    color: #EF4444;
+}
+
+/* Disabled Button */
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.about-link {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 8px;
+    color: #FFFFFF;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    transition: all 0.3s ease;
+}
+
+.about-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #d4af37;
+    transform: translateY(-2px);
+}
+
+.about-footer {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.about-footer p {
+    font-size: 0.875rem;
+    color: #CCCCCC;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .settings-container {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .settings-tab {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-page {
+        padding: 1rem;
+    }
+
+    .settings-title {
+        font-size: 1.5rem;
+    }
+
+    .settings-content {
+        padding: 1.5rem;
+    }
+
+    .setting-toggle {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .about-links {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,370 @@
+/**
+ * TemplateManager Component Styles
+ * Dark Golden Theme - Modern SaaS Design
+ */
+
+.template-manager {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Header */
+.template-manager-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.template-manager-header-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.template-manager-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+.template-manager-subtitle {
+    font-size: 0.875rem;
+    color: #E0E0E0;
+    margin-top: 0.25rem;
+}
+
+.template-manager-create-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(90deg, #d4af37, #C28608);
+    color: #000000;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.template-manager-create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.template-manager-create-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Template Form */
+.template-form-container {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.template-form-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 1rem;
+}
+
+.template-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Form Field */
+.template-form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.template-form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+}
+
+.template-form-label-required {
+    color: #EF4444;
+}
+
+.template-form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.template-form-input::placeholder {
+    color: #CCCCCC;
+}
+
+.template-form-input:focus {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.08);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.template-form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.template-form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+}
+
+.template-form-textarea::placeholder {
+    color: #CCCCCC;
+}
+
+.template-form-textarea:focus {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.08);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+.template-form-textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Priority Selector */
+.template-priority-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.template-priority-btn {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    color: #E0E0E0;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.template-priority-btn:hover:not(:disabled) {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.template-priority-btn.active {
+    background: #d4af37;
+    color: #000000;
+    border-color: #d4af37;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    transform: scale(1.05);
+}
+
+.template-priority-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Form Actions */
+.template-form-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.template-form-submit {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(90deg, #d4af37, #C28608);
+    color: #000000;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-form-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.template-form-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.template-form-cancel {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: #FFFFFF;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-form-cancel:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #d4af37;
+}
+
+.template-form-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Template List */
+.template-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .template-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Template Card */
+.template-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.template-card:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.template-card-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.template-card-icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(212, 175, 55, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.template-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.template-card-name {
+    font-weight: 600;
+    color: #FFFFFF;
+    font-size: 0.95rem;
+}
+
+.template-card-description {
+    font-size: 0.875rem;
+    color: #E0E0E0;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+.template-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.template-card-priority {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: #E0E0E0;
+    border-radius: 6px;
+    text-transform: capitalize;
+}
+
+.template-card-usage {
+    font-size: 0.75rem;
+    color: #CCCCCC;
+}
+
+.template-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.template-card-edit {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-card-edit:hover {
+    background: rgba(212, 175, 55, 0.2);
+}
+
+.template-card-delete {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.template-card-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}

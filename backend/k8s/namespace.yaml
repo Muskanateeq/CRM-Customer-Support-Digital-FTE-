@@ -1,0 +1,8 @@
+# Kubernetes namespace for TaskNest
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tasknest
+  labels:
+    name: tasknest
+    environment: production
