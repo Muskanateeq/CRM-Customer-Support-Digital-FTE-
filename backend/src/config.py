@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     API_HOST: str = Field(default="0.0.0.0", description="API host")
     API_PORT: int = Field(default=8000, description="API port")
     API_CORS_ORIGINS: str = Field(default="http://localhost:3000", description="CORS allowed origins (comma-separated)")
+    FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL for ticket links")
 
     # ============================================
     # Neon PostgreSQL Settings
@@ -70,6 +71,7 @@ class Settings(BaseSettings):
     # ============================================
     GMAIL_ENABLED: bool = Field(default=False, description="Enable Gmail channel")
     GMAIL_ADDRESS: Optional[str] = Field(default=None, description="Gmail support email address")
+    ADMIN_EMAIL: Optional[str] = Field(default="custora.admin.support@gmail.com", description="Admin email for escalation notifications")
     GMAIL_CREDENTIALS_JSON: Optional[str] = Field(default=None, description="Gmail OAuth credentials")
     GMAIL_TOKEN_JSON: Optional[str] = Field(default=None, description="Gmail OAuth token")
     GOOGLE_PUBSUB_TOPIC: Optional[str] = Field(default=None, description="Google Pub/Sub topic")

@@ -363,6 +363,7 @@ async def whatsapp_webhook_endpoint(
         from_number = params.get('From')
         to_number = params.get('To')
         body = params.get('Body', '')
+        profile_name = params.get('ProfileName')  # Sender's WhatsApp profile name
         num_media = int(params.get('NumMedia', 0))
 
         # Get media URLs if any
@@ -379,6 +380,7 @@ async def whatsapp_webhook_endpoint(
             to_number=to_number,
             body=body,
             message_sid=message_sid,
+            profile_name=profile_name,
             media_urls=media_urls if media_urls else None,
         )
 
@@ -395,6 +397,7 @@ async def process_whatsapp_message(
     to_number: str,
     body: str,
     message_sid: str,
+    profile_name: Optional[str] = None,
     media_urls: Optional[list] = None,
 ) -> None:
     """
@@ -405,6 +408,7 @@ async def process_whatsapp_message(
         to_number: Recipient's WhatsApp number
         body: Message body
         message_sid: Twilio message SID
+        profile_name: Sender's WhatsApp profile name
         media_urls: List of media URLs
     """
     try:
@@ -417,6 +421,7 @@ async def process_whatsapp_message(
             to_number=to_number,
             body=body,
             message_sid=message_sid,
+            profile_name=profile_name,
             media_urls=media_urls,
         )
 

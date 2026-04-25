@@ -65,6 +65,8 @@ interface AuthContextState {
   user: User | null;
   session: Session | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  adminData: any | null;
   isLoading: boolean;
   error: string | null;
   login: (credentials: LoginRequest) => Promise<void>;
@@ -94,6 +96,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminData, setAdminData] = useState<any | null>(null);
   const router = useRouter();
 
   /**
@@ -103,6 +107,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initAuth = async () => {
       try {
         console.log('[AuthContext] Initializing auth...');
+
+        // First check if admin is logged in
+        try {
+          const adminResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/me`,
+            {
+              credentials: 'include',
+            }
+          );
+
+          if (adminResponse.ok) {
+            const adminData = await adminResponse.json();
+            console.log('[AuthContext] Admin session found:', adminData);
+            setIsAdmin(true);
+            setAdminData(adminData);
+            setSession(null);
+            setIsLoading(false);
+            return;
+          }
+        } catch (adminErr) {
+          console.log('[AuthContext] No admin session found');
+        }
+
+        // If not admin, check Better Auth session
         const { data, error } = await authClient.getSession();
 
         console.log('[AuthContext] getSession response:', { data, error });
@@ -116,6 +144,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             session: data.session
           });
           setSession(data as Session);
+          setIsAdmin(false);
+          setAdminData(null);
         } else {
           console.log('[AuthContext] No session data returned');
           setSession(null);
@@ -162,7 +192,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   /**
-   * Login user with Better Auth
+   * Login user with Better Auth (supports both admin and normal users)
    */
   const login = useCallback(async (credentials: LoginRequest) => {
     setIsLoading(true);
@@ -171,12 +201,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('[AuthContext] Starting login for:', credentials.email);
 
+      // First, try admin login
+      try {
+        const adminResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password
+            }),
+          }
+        );
+
+        if (adminResponse.ok) {
+          const adminData = await adminResponse.json();
+
+          if (adminData.success) {
+            console.log('[AuthContext] Admin login successful:', adminData);
+            setIsAdmin(true);
+            setAdminData(adminData.admin);
+            setSession(null); // Clear Better Auth session
+
+            // Redirect to admin dashboard
+            router.push('/admin/dashboard');
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (adminErr) {
+        console.log('[AuthContext] Not an admin user, trying normal login');
+      }
+
+      // If admin login failed, try normal Better Auth login
       const { data, error } = await authClient.signIn.email({
         email: credentials.email,
         password: credentials.password,
       });
 
-      console.log('[AuthContext] Login response:', { data, error });
+      console.log('[AuthContext] Normal login response:', { data, error });
 
       if (error) {
         const errorMessage = error.message || 'Login failed. Please try again.';
@@ -186,7 +251,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (data) {
-        console.log('[AuthContext] Login successful, fetching session...');
+        console.log('[AuthContext] Normal login successful, fetching session...');
 
         // Wait a bit for cookies to be set
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -198,6 +263,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (sessionData) {
           setSession(sessionData as Session);
+          setIsAdmin(false);
+          setAdminData(null);
           console.log('[AuthContext] Session set, redirecting to /support');
         } else {
           console.warn('[AuthContext] No session data after login');
@@ -283,7 +350,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const logout = useCallback(async () => {
     try {
-      await authClient.signOut();
+      // If admin, logout from admin
+      if (isAdmin) {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/logout`,
+          {
+            method: 'POST',
+            credentials: 'include',
+          }
+        );
+        setIsAdmin(false);
+        setAdminData(null);
+      } else {
+        // Normal user logout
+        await authClient.signOut();
+      }
+
       setSession(null);
       setError(null);
       // Redirect to home page
@@ -292,9 +374,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Logout failed:', err);
       // Force logout even if API call fails
       setSession(null);
+      setIsAdmin(false);
+      setAdminData(null);
       router.push('/');
     }
-  }, [router]);
+  }, [router, isAdmin]);
 
   /**
    * Get JWT token for API requests
@@ -311,9 +395,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const value: AuthContextState = {
-    user: session?.user || null,
+    user: session?.user || (isAdmin && adminData ? {
+      id: adminData.id,
+      email: adminData.email,
+      name: adminData.name,
+      emailVerified: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } : null),
     session,
-    isAuthenticated: !!session?.user,
+    isAuthenticated: !!session?.user || isAdmin,
+    isAdmin,
+    adminData,
     isLoading,
     error,
     login,

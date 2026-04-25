@@ -114,7 +114,7 @@ def generate_token():
         print("Next Steps:")
         print("  1. Restart your backend server (Ctrl+C and restart)")
         print("  2. Run the email polling script: start_email_polling.bat")
-        print("  3. Send a test email to: mahu.in.456@gmail.com")
+        print("  3. Send a test email to: custora.support@gmail.com")
         print()
         print("=" * 70)
 

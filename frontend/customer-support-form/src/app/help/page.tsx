@@ -83,6 +83,35 @@ export default function HelpPage() {
     }
   };
 
+  const handleCategoryClick = async (categoryName: string) => {
+    // Search for articles in this category
+    setSearchQuery(categoryName);
+    setIsSearching(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/help/search?q=${encodeURIComponent(categoryName)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Search failed");
+      }
+
+      const data = await response.json();
+      setSearchResults(data.articles || []);
+
+      // Scroll to results
+      window.scrollTo({ top: 400, behavior: 'smooth' });
+
+    } catch (err) {
+      console.error("Category search error:", err);
+      setError("Failed to load category articles. Please try again.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -270,6 +299,7 @@ export default function HelpPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
                     whileHover={{ y: -8 }}
+                    onClick={() => handleCategoryClick(category.category)}
                     className="glass-card p-6 cursor-pointer group"
                   >
                     <div
@@ -352,7 +382,7 @@ export default function HelpPage() {
             <p className="text-[#94A3B8] mb-6">
               Help articles will appear here as tickets are created
             </p>
-            <a href="/" className="btn-primary inline-block">
+            <a href="/support" className="btn-primary inline-block">
               Contact Support
             </a>
           </motion.div>
@@ -374,7 +404,7 @@ export default function HelpPage() {
                 Can&apos;t find what you&apos;re looking for? Our AI assistant is here to help 24/7
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/" className="btn-primary">
+                <a href="/support" className="btn-primary">
                   Contact Support
                 </a>
                 <a href="/tickets" className="btn-secondary">

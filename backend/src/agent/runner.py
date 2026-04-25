@@ -7,45 +7,15 @@ import asyncio
 from typing import Optional, Dict, Any, AsyncIterator
 from datetime import datetime
 
-from openai import AsyncOpenAI
-from agents import Agent, Runner, set_default_openai_client
-from openai.types.responses import ResponseTextDeltaEvent
+from typing import Optional, Dict, Any
 
 from src.config import settings
 from src.utils.logging import get_logger
-from src.agent.tools import (
-    search_knowledge_base,
-    create_ticket,
-    get_customer_history,
-    escalate_to_human,
-    send_response,
-)
-from src.agent.config import get_agent_instructions, AGENT_CONFIG, TOOL_SETTINGS
-from src.agent.dual_mode_router import get_router
 
 logger = get_logger(__name__)
 
-
-# Initialize custom LLM client (Groq or OpenAI)
-def _initialize_llm_client():
-    """Initialize LLM client based on configuration."""
-    if settings.USE_GROQ:
-        logger.info(f"Initializing Groq client with model: {settings.AGENT_MODEL}")
-        groq_client = AsyncOpenAI(
-            base_url="https://api.groq.com/openai/v1",
-            api_key=settings.GROQ_API_KEY
-        )
-        set_default_openai_client(groq_client)
-    else:
-        logger.info(f"Initializing OpenAI client with model: {settings.AGENT_MODEL}")
-        openai_client = AsyncOpenAI(
-            api_key=settings.OPENAI_API_KEY
-        )
-        set_default_openai_client(openai_client)
-
-
-# Initialize client on module load
-_initialize_llm_client()
+# Import the router that handles agent orchestration
+from src.agent.dual_mode_router import get_router
 
 
 class CustomerSuccessAgent:
@@ -95,8 +65,8 @@ class CustomerSuccessAgent:
     async def run(
         self,
         user_input: str,
-        customer_id: int,
-        conversation_id: int,
+        customer_id: str,
+        conversation_id: str,
         channel: str = "webform",
         context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
@@ -171,8 +141,8 @@ class CustomerSuccessAgent:
     async def run_streamed(
         self,
         user_input: str,
-        customer_id: int,
-        conversation_id: int,
+        customer_id: str,
+        conversation_id: str,
         channel: str = "webform",
         context: Optional[Dict[str, Any]] = None,
     ) -> AsyncIterator[Dict[str, Any]]:
@@ -272,8 +242,8 @@ class CustomerSuccessAgent:
     def _prepare_input(
         self,
         user_input: str,
-        customer_id: int,
-        conversation_id: int,
+        customer_id: str,
+        conversation_id: str,
         channel: str,
         context: Optional[Dict[str, Any]],
     ) -> str:
@@ -367,8 +337,8 @@ def get_agent() -> CustomerSuccessAgent:
 
 def process_customer_message(
     user_input: str,
-    customer_id: int,
-    conversation_id: int,
+    customer_id: str,
+    conversation_id: str,
     channel: str = "webform",
     context: Optional[Dict[str, Any]] = None,
     streaming: bool = False,
@@ -378,8 +348,8 @@ def process_customer_message(
 
     Args:
         user_input: Customer's message
-        customer_id: Customer ID
-        conversation_id: Conversation ID
+        customer_id: Customer ID (UUID string)
+        conversation_id: Conversation ID (UUID string)
         channel: Communication channel
         context: Additional context
         streaming: Whether to use streaming responses
@@ -389,16 +359,12 @@ def process_customer_message(
     """
     router = get_router()
 
-    # Convert IDs to strings for UUID compatibility
-    customer_id_str = str(customer_id)
-    conversation_id_str = str(conversation_id)
-
     if streaming:
         # Return the async generator directly
         return router.run_streamed(
             user_input=user_input,
-            customer_id=customer_id_str,
-            conversation_id=conversation_id_str,
+            customer_id=customer_id,
+            conversation_id=conversation_id,
             channel=channel,
             context=context,
         )
@@ -406,8 +372,8 @@ def process_customer_message(
         # Return the coroutine
         return router.run(
             user_input=user_input,
-            customer_id=customer_id_str,
-            conversation_id=conversation_id_str,
+            customer_id=customer_id,
+            conversation_id=conversation_id,
             channel=channel,
             context=context,
         )

@@ -25,6 +25,7 @@ interface TicketDetail {
   source_channel: string;
   created_at: string;
   resolved_at: string | null;
+  subject?: string;
 }
 
 interface TicketResponse {
@@ -158,7 +159,7 @@ export default function TicketDetailPage() {
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => router.push("/tickets")}
+          onClick={() => router.push("/dashboard")}
           className="flex items-center gap-2 text-[#94A3B8] hover:text-[#F8FAFC] transition-colors mb-6 mt-16"
         >
           <HiArrowLeft className="w-5 h-5" />
@@ -197,6 +198,14 @@ export default function TicketDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Subject Section */}
+          {ticket.subject && ticket.subject !== "No subject" && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-[#64748B] text-sm mb-2">Subject</p>
+              <p className="text-[#F8FAFC] text-base">{ticket.subject}</p>
+            </div>
+          )}
         </motion.div>
 
         {/* Ticket Details Grid */}

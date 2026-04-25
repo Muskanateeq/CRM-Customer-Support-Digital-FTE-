@@ -82,15 +82,21 @@ class SmartAgent:
                     limit=3
                 )
 
-                # Create tracking ticket
+                # Create tracking ticket with meaningful subject
                 logger.info(f"Creating tracking ticket [cid: {conversation_id[:8]}]")
+
+                # Generate subject from user query (first 100 chars)
+                subject = user_input[:100].strip()
+                if len(user_input) > 100:
+                    subject += "..."
+
                 ticket_id = await db_create_ticket(
                     customer_id=customer_id,
                     conversation_id=conversation_id,
                     category=category,
                     priority=priority,
                     source_channel=channel,
-                    resolution_notes=None
+                    resolution_notes=subject  # Use query as subject
                 )
                 logger.info(f"Ticket created: {ticket_id} [cid: {conversation_id[:8]}]")
 
@@ -100,15 +106,26 @@ class SmartAgent:
                 pass
 
             elif scenario == "SCENARIO_3_ESCALATION":
-                # Create escalation ticket
+                # Create escalation ticket with user query as subject
                 logger.info(f"Creating escalation ticket [cid: {conversation_id[:8]}]")
+
+                # Generate subject from user query (first 100 chars)
+                subject = user_input[:100].strip()
+                if len(user_input) > 100:
+                    subject += "..."
+
+                # Use classification reasoning for escalation_reason
+                escalation_reason = classification.get('reasoning', 'Customer requires human support')
+
                 ticket_id = await db_create_ticket(
                     customer_id=customer_id,
                     conversation_id=conversation_id,
                     category="general",  # Escalations go to general category
                     priority=priority,
                     source_channel=channel,
-                    resolution_notes=f"ESCALATION: {classification.get('reasoning', 'Customer requires human support')}"
+                    resolution_notes=subject,  # User query as subject
+                    status="escalated",  # Set status to escalated
+                    escalated=True  # Set escalated_at timestamp
                 )
                 logger.info(f"Escalation ticket created: {ticket_id} [cid: {conversation_id[:8]}]")
 

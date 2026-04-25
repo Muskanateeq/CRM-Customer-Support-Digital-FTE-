@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { HiSearch, HiTicket, HiClock, HiCheckCircle, HiExclamationCircle } from "react-icons/hi";
+import authClient from "@/lib/auth-client";
+import AuthGate from "@/components/AuthGate";
 
 interface Ticket {
   id: string;
@@ -19,10 +21,58 @@ interface Ticket {
 
 export default function TicketsPage() {
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Check authentication
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-[#0A0E27] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#3B82F6]"></div>
+          <p className="text-[#94A3B8] mt-4">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <AuthGate
+        title="Sign Up to Track Your Tickets"
+        description="Create a free account to manage and track all your support tickets in one place."
+        features={[
+          {
+            title: "Track All Tickets",
+            description: "View and manage all your support requests from one dashboard"
+          },
+          {
+            title: "Detailed History",
+            description: "Access complete ticket history and conversation logs"
+          },
+          {
+            title: "Real-Time Updates",
+            description: "Get instant notifications when ticket status changes"
+          },
+          {
+            title: "Anytime Access",
+            description: "Check your tickets from anywhere, on any device"
+          },
+          {
+            title: "Priority Support",
+            description: "Receive faster responses and dedicated assistance"
+          },
+          {
+            title: "Export Reports",
+            description: "Download ticket reports and conversation transcripts"
+          },
+        ]}
+      />
+    );
+  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {

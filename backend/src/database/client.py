@@ -346,23 +346,39 @@ async def create_ticket(
     category: str,
     priority: str,
     source_channel: str,
-    resolution_notes: Optional[str] = None
+    resolution_notes: Optional[str] = None,
+    status: str = 'open',
+    escalated: bool = False
 ) -> str:
     """
     Create new ticket.
+
+    Args:
+        status: Ticket status (default: 'open', can be 'escalated' for escalations)
+        escalated: If True, sets escalated_at timestamp
 
     Returns:
         str: Ticket UUID
     """
     async with get_db_connection() as conn:
-        ticket_id = await conn.fetchval(
-            """
-            INSERT INTO tickets (customer_id, conversation_id, category, priority, status, source_channel, resolution_notes)
-            VALUES ($1, $2, $3, $4, 'open', $5, $6)
-            RETURNING id
-            """,
-            customer_id, conversation_id, category, priority, source_channel, resolution_notes
-        )
+        if escalated:
+            ticket_id = await conn.fetchval(
+                """
+                INSERT INTO tickets (customer_id, conversation_id, category, priority, status, source_channel, resolution_notes, escalated_at, escalation_reason)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $7)
+                RETURNING id
+                """,
+                customer_id, conversation_id, category, priority, status, source_channel, resolution_notes
+            )
+        else:
+            ticket_id = await conn.fetchval(
+                """
+                INSERT INTO tickets (customer_id, conversation_id, category, priority, status, source_channel, resolution_notes)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id
+                """,
+                customer_id, conversation_id, category, priority, status, source_channel, resolution_notes
+            )
         return str(ticket_id)
 
 
@@ -439,14 +455,14 @@ async def insert_knowledge_entry(title: str, content: str, category: str, embedd
 # Health Check
 # ============================================
 
-async def update_conversation_status(conversation_id: int, status: str) -> Optional[Dict[str, Any]]:
+async def update_conversation_status(conversation_id: str, status: str) -> Optional[Dict[str, Any]]:
     """Update conversation status."""
     async with get_db_connection() as conn:
         row = await conn.fetchrow(
             """
             UPDATE conversations
             SET status = $1, updated_at = NOW()
-            WHERE conversation_id = $2
+            WHERE id = $2
             RETURNING *
             """,
             status, conversation_id

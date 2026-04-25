@@ -66,22 +66,29 @@ async def get_dashboard_stats() -> DashboardStatsResponse:
             # Get average time between customer message and first agent response
             avg_response_seconds = await conn.fetchval(
                 """
-                SELECT AVG(
-                    EXTRACT(EPOCH FROM (
-                        agent_msg.created_at - customer_msg.created_at
-                    ))
+                WITH response_times AS (
+                    SELECT
+                        EXTRACT(EPOCH FROM (
+                            agent_msg.created_at - customer_msg.created_at
+                        )) as response_seconds
+                    FROM messages customer_msg
+                    JOIN LATERAL (
+                        SELECT created_at
+                        FROM messages
+                        WHERE conversation_id = customer_msg.conversation_id
+                        AND role = 'agent'
+                        AND direction = 'outbound'
+                        AND created_at > customer_msg.created_at
+                        ORDER BY created_at ASC
+                        LIMIT 1
+                    ) agent_msg ON true
+                    WHERE customer_msg.role = 'customer'
+                    AND customer_msg.direction = 'inbound'
+                    AND customer_msg.created_at >= NOW() - INTERVAL '7 days'
                 )
-                FROM messages customer_msg
-                JOIN LATERAL (
-                    SELECT created_at
-                    FROM messages
-                    WHERE conversation_id = customer_msg.conversation_id
-                    AND role = 'agent'
-                    AND created_at > customer_msg.created_at
-                    ORDER BY created_at ASC
-                    LIMIT 1
-                ) agent_msg ON true
-                WHERE customer_msg.role = 'customer'
+                SELECT AVG(response_seconds)
+                FROM response_times
+                WHERE response_seconds > 0 AND response_seconds < 3600
                 """
             )
 
@@ -89,9 +96,11 @@ async def get_dashboard_stats() -> DashboardStatsResponse:
             if avg_response_seconds and avg_response_seconds > 0:
                 if avg_response_seconds < 60:
                     avg_response_time = f"< {int(avg_response_seconds)} seconds"
+                elif avg_response_seconds < 120:
+                    avg_response_time = "< 2 minutes"
                 else:
-                    avg_minutes = avg_response_seconds / 60
-                    avg_response_time = f"< {int(avg_minutes)} minutes"
+                    avg_minutes = int(avg_response_seconds / 60)
+                    avg_response_time = f"< {avg_minutes} minutes"
             else:
                 avg_response_time = "< 2 minutes"
 
@@ -257,9 +266,36 @@ async def search_tickets(
 async def get_ticket_details(ticket_id: str) -> Dict[str, Any]:
     """Get ticket details with conversation messages."""
     try:
-        ticket = await get_ticket(ticket_id)
-        if not ticket:
+        async with get_db_connection() as conn:
+            # Get ticket with customer info
+            ticket_row = await conn.fetchrow(
+                """
+                SELECT
+                    t.id,
+                    t.customer_id,
+                    t.conversation_id,
+                    t.category,
+                    t.priority,
+                    t.status,
+                    t.source_channel,
+                    t.created_at,
+                    t.resolved_at,
+                    t.resolution_notes,
+                    t.escalation_reason,
+                    c.name as customer_name,
+                    c.email as customer_email,
+                    c.phone as customer_phone
+                FROM tickets t
+                JOIN customers c ON t.customer_id = c.id
+                WHERE t.id = $1
+                """,
+                ticket_id
+            )
+
+        if not ticket_row:
             raise HTTPException(status_code=404, detail="Ticket not found")
+
+        ticket = dict(ticket_row)
 
         # Get conversation messages if conversation_id exists
         messages = []
@@ -286,14 +322,16 @@ async def get_ticket_details(ticket_id: str) -> Dict[str, Any]:
                 'id': str(ticket['id']),
                 'ticket_number': f"TKT-{str(ticket['id']).replace('-', '').upper()[:8]}",
                 'customer_id': str(ticket['customer_id']),
-                'customer_name': ticket.get('customer_name', 'Unknown'),
-                'customer_email': ticket.get('customer_email', 'Unknown'),
+                'customer_name': ticket.get('customer_name') or 'Unknown',
+                'customer_email': ticket.get('customer_email') or 'Unknown',
+                'customer_phone': ticket.get('customer_phone'),
                 'category': ticket['category'],
                 'priority': ticket['priority'],
                 'status': ticket['status'],
                 'source_channel': ticket['source_channel'],
                 'created_at': ticket['created_at'].isoformat(),
-                'resolved_at': ticket['resolved_at'].isoformat() if ticket.get('resolved_at') else None
+                'resolved_at': ticket['resolved_at'].isoformat() if ticket.get('resolved_at') else None,
+                'subject': ticket.get('resolution_notes') or ticket.get('escalation_reason') or 'No subject'
             },
             'messages': messages,
             'message_count': len(messages)
@@ -354,7 +392,8 @@ async def get_customer_tickets(customer_id: str) -> Dict[str, Any]:
 @router.get("/help/popular")
 async def get_popular_topics(limit: int = Query(5, ge=1, le=20)) -> Dict[str, Any]:
     """
-    Get popular topics based on ticket data.
+    Get popular topics based on customer queries and ticket subjects.
+    Groups similar queries together and shows total frequency.
 
     Args:
         limit: Number of topics to return (default: 5, max: 20)
@@ -364,29 +403,80 @@ async def get_popular_topics(limit: int = Query(5, ge=1, le=20)) -> Dict[str, An
     """
     try:
         async with get_db_connection() as conn:
-            # Get most common ticket subjects/categories
+            # Get all customer queries with their frequencies
             rows = await conn.fetch(
                 """
                 SELECT
-                    COALESCE(t.resolution_notes, 'General Support') as title,
+                    m.content,
                     t.category,
-                    COUNT(*) as views
-                FROM tickets t
-                WHERE t.resolution_notes IS NOT NULL AND t.resolution_notes != ''
-                GROUP BY t.resolution_notes, t.category
-                ORDER BY views DESC
-                LIMIT $1
-                """,
-                limit
+                    COUNT(*) as frequency
+                FROM messages m
+                JOIN conversations c ON m.conversation_id = c.id
+                LEFT JOIN tickets t ON c.id = t.conversation_id
+                WHERE
+                    m.role = 'customer'
+                    AND m.direction = 'inbound'
+                    AND LENGTH(m.content) > 10
+                    AND LENGTH(m.content) < 300
+                GROUP BY m.content, t.category
+                ORDER BY frequency DESC
+                LIMIT 100
+                """
             )
 
-            topics = []
+            # Group similar queries using keyword matching
+            topic_groups = {}
+
             for row in rows:
-                topics.append({
-                    "title": row['title'],
-                    "category": row['category'].capitalize(),
-                    "views": row['views']
-                })
+                content = row['content'].strip().lower()
+                category = row['category'] or 'general'
+                frequency = row['frequency']
+
+                # Extract key phrases (simple keyword-based grouping)
+                matched = False
+                for key in list(topic_groups.keys()):
+                    # Check if queries are similar (share significant words)
+                    key_words = set(key.split())
+                    content_words = set(content.split())
+
+                    # If 60% or more words match, group them together
+                    common_words = key_words & content_words
+                    if len(common_words) >= min(3, len(key_words) * 0.6):
+                        topic_groups[key]['views'] += frequency
+                        topic_groups[key]['count'] += 1
+                        matched = True
+                        break
+
+                if not matched:
+                    # Create new topic group
+                    # Generate clean title (first 80 chars, capitalize)
+                    clean_title = row['content'].strip()
+                    if len(clean_title) > 80:
+                        clean_title = clean_title[:77] + "..."
+
+                    topic_groups[content] = {
+                        'title': clean_title,
+                        'category': category.capitalize(),
+                        'views': frequency,
+                        'count': 1
+                    }
+
+            # Sort by total views and take top N
+            sorted_topics = sorted(
+                topic_groups.values(),
+                key=lambda x: x['views'],
+                reverse=True
+            )[:limit]
+
+            # Format response
+            topics = [
+                {
+                    'title': topic['title'],
+                    'category': topic['category'],
+                    'views': topic['views']
+                }
+                for topic in sorted_topics
+            ]
 
             return {
                 "topics": topics,
@@ -476,31 +566,46 @@ async def search_help_articles(
     q: str = Query(..., description="Search query for help articles")
 ) -> Dict[str, Any]:
     """
-    Search help articles/tickets by subject or content.
+    Search help articles based on customer queries and ticket data.
 
     Args:
         q: Search query
 
     Returns:
-        List of matching tickets/articles
+        List of matching customer queries and tickets
     """
     try:
         async with get_db_connection() as conn:
             rows = await conn.fetch(
                 """
+                WITH relevant_queries AS (
+                    SELECT DISTINCT
+                        m.id::text as id,
+                        SUBSTRING(m.content, 1, 150) as title,
+                        COALESCE(t.category, 'General') as category,
+                        m.created_at,
+                        COUNT(*) OVER (PARTITION BY LOWER(SUBSTRING(m.content, 1, 100))) as views
+                    FROM messages m
+                    JOIN conversations c ON m.conversation_id = c.id
+                    LEFT JOIN tickets t ON c.id = t.conversation_id
+                    WHERE
+                        m.role = 'customer'
+                        AND m.direction = 'inbound'
+                        AND (
+                            m.content ILIKE $1
+                            OR t.category ILIKE $1
+                        )
+                        AND LENGTH(m.content) > 10
+                        AND LENGTH(m.content) < 500
+                )
                 SELECT
-                    t.id,
-                    COALESCE(t.resolution_notes, 'Support Request') as title,
-                    t.category,
-                    t.status,
-                    t.created_at,
-                    COUNT(*) OVER (PARTITION BY t.resolution_notes) as views
-                FROM tickets t
-                WHERE
-                    t.resolution_notes ILIKE $1
-                    OR t.category ILIKE $1
-                GROUP BY t.id, t.resolution_notes, t.category, t.status, t.created_at
-                ORDER BY views DESC, t.created_at DESC
+                    id,
+                    title,
+                    category,
+                    created_at,
+                    views
+                FROM relevant_queries
+                ORDER BY views DESC, created_at DESC
                 LIMIT 20
                 """,
                 f"%{q}%"
@@ -508,13 +613,15 @@ async def search_help_articles(
 
             articles = []
             for row in rows:
-                articles.append({
-                    "id": str(row['id']),
-                    "title": row['title'],
-                    "category": row['category'].capitalize(),
-                    "views": row['views'],
-                    "created_at": row['created_at'].isoformat() if row['created_at'] else None
-                })
+                title = row['title'].strip()
+                if title:
+                    articles.append({
+                        "id": row['id'],
+                        "title": title,
+                        "category": row['category'].capitalize() if row['category'] else 'General',
+                        "views": row['views'],
+                        "created_at": row['created_at'].isoformat() if row['created_at'] else None
+                    })
 
             return {
                 "articles": articles,

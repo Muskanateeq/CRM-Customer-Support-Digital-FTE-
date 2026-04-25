@@ -13,6 +13,8 @@ const features = [
       "Send us an email anytime. Our AI agent monitors your inbox and responds with detailed, helpful answers within minutes.",
     color: "from-[#EA4335] to-[#FBBC04]",
     bgColor: "bg-[#EA4335]/10",
+    contact: "custora.support@gmail.com",
+    contactLink: "/features/email",
   },
   {
     icon: SiWhatsapp,
@@ -22,6 +24,8 @@ const features = [
       "Get quick responses on WhatsApp. Perfect for on-the-go support with instant notifications and conversational replies.",
     color: "from-[#25D366] to-[#128C7E]",
     bgColor: "bg-[#25D366]/10",
+    contact: "+1 (415) 523-8886",
+    contactLink: "/features/whatsapp",
   },
   {
     icon: HiGlobe,
@@ -31,6 +35,8 @@ const features = [
       "Chat directly on our website with real-time AI responses. Get instant help with streaming answers as you type.",
     color: "from-[#3B82F6] to-[#2563EB]",
     bgColor: "bg-[#3B82F6]/10",
+    contact: "Start Chat",
+    contactLink: "/features/webform",
   },
 ];
 
@@ -85,12 +91,24 @@ export default function Features() {
               </p>
 
               {/* Description */}
-              <p className="text-[#94A3B8] text-sm leading-relaxed">
+              <p className="text-[#94A3B8] text-sm leading-relaxed mb-4">
                 {feature.description}
               </p>
 
+              {/* Contact Information */}
+              <a
+                href={feature.contactLink}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-white/5 to-white/10 hover:from-white/10 hover:to-white/15 border border-white/10 rounded-lg text-[#F8FAFC] text-sm font-medium transition-all group-hover:border-white/20"
+              >
+                <feature.icon className="w-4 h-4" />
+                <span>{feature.contact}</span>
+                <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+
               {/* Hover indicator */}
-              <div className="mt-4 flex items-center gap-2 text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-3 flex items-center gap-2 text-[#3B82F6] opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-xs font-medium">Learn more</span>
                 <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

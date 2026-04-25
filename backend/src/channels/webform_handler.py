@@ -38,7 +38,7 @@ class WebFormHandler:
         category: str,
         priority: str,
         message: str,
-        conversation_id: Optional[int] = None,
+        conversation_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
@@ -145,7 +145,7 @@ class WebFormHandler:
 
     async def send_response(
         self,
-        conversation_id: int,
+        conversation_id: str,
         content: str,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:

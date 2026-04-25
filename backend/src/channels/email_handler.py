@@ -158,10 +158,13 @@ class GmailHandler:
         date = next((h['value'] for h in headers if h['name'] == 'Date'), '')
         message_id = next((h['value'] for h in headers if h['name'] == 'Message-ID'), None)
 
-        # Extract email address from "Name <email@example.com>" format
+        # Extract email address and name from "Name <email@example.com>" format
         import re
         email_match = re.search(r'<(.+?)>', from_email)
         sender_email = email_match.group(1) if email_match else from_email
+
+        # Extract sender name
+        sender_name = self._extract_name_from_header(from_email, sender_email)
 
         # Extract body
         body = self._get_email_body(message['payload'])
@@ -171,6 +174,7 @@ class GmailHandler:
             'thread_id': message['threadId'],
             'subject': subject,
             'from': sender_email,
+            'from_name': sender_name,
             'to': to_email,
             'date': date,
             'body': body,
@@ -203,6 +207,34 @@ class GmailHandler:
 
         return ""
 
+    def _extract_name_from_header(self, from_header: str, email_address: str) -> str:
+        """
+        Extract sender name from email From header.
+
+        Args:
+            from_header: Full From header (e.g., "John Doe <john@example.com>")
+            email_address: Extracted email address
+
+        Returns:
+            Sender name or fallback
+        """
+        import re
+
+        # Try to extract name from "Name <email>" format
+        name_match = re.match(r'^(.+?)\s*<.+>$', from_header.strip())
+        if name_match:
+            name = name_match.group(1).strip()
+            # Remove quotes if present
+            name = name.strip('"').strip("'")
+            if name:
+                return name
+
+        # Fallback: use email username part
+        username = email_address.split('@')[0]
+        # Convert dots/underscores to spaces and title case
+        name = username.replace('.', ' ').replace('_', ' ').title()
+        return name
+
     async def process_email(self, email_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process incoming email and create database records.
@@ -220,8 +252,8 @@ class GmailHandler:
             customer = await get_customer_by_email(email_data['from'])
 
             if not customer:
-                # Extract name from email (before @)
-                name = email_data['from'].split('@')[0].replace('.', ' ').title()
+                # Use extracted name from email header
+                name = email_data.get('from_name', 'Unknown')
 
                 customer_id = await create_customer(
                     email=email_data['from'],

@@ -3,24 +3,13 @@ Dual Mode Agent Router - Orchestrates between OpenAI and Groq agents
 Provides automatic fallback from OpenAI to Groq for resilience
 """
 
-from typing import Optional, Dict, Any, AsyncIterator, Union
+from typing import Optional, Dict, Any, AsyncIterator
 from datetime import datetime
-
-from openai import AsyncOpenAI
-from agents import Agent, Runner, set_default_openai_client
-from openai.types.responses import ResponseTextDeltaEvent
 
 from src.config import settings
 from src.utils.logging import get_logger
 from src.agent.smart_agent import SmartAgent
-from src.agent.tools import (
-    search_knowledge_base,
-    create_ticket,
-    get_customer_history,
-    escalate_to_human,
-    send_response,
-)
-from src.agent.config import get_agent_instructions, AGENT_CONFIG
+from src.agent.groq_agent import GroqAgentWithTools
 
 logger = get_logger(__name__)
 
@@ -33,36 +22,17 @@ class DualModeAgentRouter:
     """
 
     def __init__(self):
-        """Initialize both OpenAI and SmartAgent."""
-        self.openai_agent: Optional[Agent] = None
+        """Initialize GroqAgent and SmartAgent."""
+        self.groq_agent: Optional[GroqAgentWithTools] = None
         self.smart_agent: Optional[SmartAgent] = None
 
-        # Initialize OpenAI agent if not using Groq as primary
-        if not settings.USE_GROQ:
+        # Initialize GroqAgent if using Groq and API key is available
+        if settings.USE_GROQ and settings.GROQ_API_KEY:
             try:
-                # Initialize OpenAI client
-                openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-                set_default_openai_client(openai_client)
-
-                # Get system instructions
-                instructions = get_agent_instructions(channel="webform")
-
-                # Create agent with all 5 tools
-                self.openai_agent = Agent(
-                    name=AGENT_CONFIG["name"],
-                    instructions=instructions,
-                    model=settings.AGENT_MODEL,
-                    tools=[
-                        search_knowledge_base,
-                        create_ticket,
-                        get_customer_history,
-                        escalate_to_human,
-                        send_response,
-                    ],
-                )
-                logger.info("OpenAI agent initialized as primary")
+                self.groq_agent = GroqAgentWithTools()
+                logger.info("GroqAgentWithTools initialized as primary")
             except Exception as e:
-                logger.warning(f"Failed to initialize OpenAI agent: {e}")
+                logger.warning(f"Failed to initialize GroqAgent: {e}")
 
         # Always initialize SmartAgent as fallback (classification-based, no tool calling)
         try:
@@ -94,47 +64,41 @@ class DualModeAgentRouter:
         """
         start_time = datetime.utcnow()
 
-        # Try OpenAI first (if available and not using Groq as primary)
-        if self.openai_agent and not settings.USE_GROQ:
+        # Try GroqAgent first (if available and using Groq as primary)
+        if self.groq_agent and settings.USE_GROQ:
             try:
                 logger.info(
-                    f"Attempting OpenAI agent [cid: {conversation_id[:8]}]"
+                    f"Attempting GroqAgent [cid: {conversation_id[:8]}]"
                 )
 
-                # Update agent instructions for specific channel
-                channel_instructions = get_agent_instructions(channel=channel)
-                self.openai_agent.instructions = channel_instructions
-
-                # Prepare context-aware input
-                enhanced_input = self._prepare_input(
-                    user_input, customer_id, conversation_id, channel, context
-                )
-
-                # Run agent (non-streaming)
-                result = await Runner.run(
-                    self.openai_agent,
-                    input=enhanced_input,
+                # Run Groq agent (non-streaming)
+                result = await self.groq_agent.run(
+                    user_input=user_input,
+                    customer_id=customer_id,
+                    conversation_id=conversation_id,
+                    channel=channel,
+                    context=context,
                 )
 
                 # Calculate execution time
                 execution_time = (datetime.utcnow() - start_time).total_seconds()
 
                 logger.info(
-                    f"OpenAI agent succeeded [cid: {conversation_id[:8]}]"
+                    f"GroqAgent succeeded [cid: {conversation_id[:8]}]"
                 )
 
                 return {
-                    "final_output": result.final_output,
+                    "final_output": result.get("final_output", ""),
                     "execution_time": execution_time,
                     "channel": channel,
                     "customer_id": customer_id,
                     "conversation_id": conversation_id,
-                    "mode": "openai"
+                    "mode": "groq"
                 }
 
             except Exception as e:
                 logger.warning(
-                    f"OpenAI agent failed: {e} - Falling back to Groq [cid: {conversation_id[:8]}]"
+                    f"GroqAgent failed: {e} - Falling back to SmartAgent [cid: {conversation_id[:8]}]"
                 )
 
         # Fallback to SmartAgent (or use as primary if USE_GROQ=true)
@@ -195,88 +159,44 @@ class DualModeAgentRouter:
         Yields:
             Dict with event type and data
         """
-        # Try OpenAI first (if available and not using Groq as primary)
-        if self.openai_agent and not settings.USE_GROQ:
+        # Try GroqAgent first (if available and using Groq as primary)
+        if self.groq_agent and settings.USE_GROQ:
             try:
                 logger.info(
-                    f"Attempting OpenAI agent (streaming) [cid: {conversation_id[:8]}]"
+                    f"Attempting GroqAgent (streaming) [cid: {conversation_id[:8]}]"
                 )
 
                 # Yield mode indicator
                 yield {
                     "type": "mode",
-                    "data": {"mode": "openai", "status": "primary"},
+                    "data": {"mode": "groq", "status": "primary"},
                 }
 
-                # Update agent instructions for specific channel
-                channel_instructions = get_agent_instructions(channel=channel)
-                self.openai_agent.instructions = channel_instructions
-
-                # Prepare context-aware input
-                enhanced_input = self._prepare_input(
-                    user_input, customer_id, conversation_id, channel, context
-                )
-
-                # Run agent with streaming
-                result = Runner.run_streamed(
-                    self.openai_agent,
-                    input=enhanced_input,
-                )
-
-                # Stream events to caller
-                async for event in result.stream_events():
-                    # Text deltas for real-time display
-                    if event.type == "raw_response_event":
-                        if isinstance(event.data, ResponseTextDeltaEvent):
-                            yield {
-                                "type": "text_delta",
-                                "data": event.data.delta,
-                            }
-
-                    # Tool calls
-                    elif event.type == "run_item_stream_event":
-                        if event.item.type == "tool_call_item":
-                            yield {
-                                "type": "tool_call",
-                                "data": {
-                                    "tool_name": event.item.name,
-                                    "tool_id": event.item.id,
-                                },
-                            }
-                        elif event.item.type == "tool_call_output_item":
-                            yield {
-                                "type": "tool_output",
-                                "data": {
-                                    "output": event.item.output,
-                                },
-                            }
-
-                # Final result
-                start_time = datetime.utcnow()
-                execution_time = (datetime.utcnow() - start_time).total_seconds()
-                yield {
-                    "type": "final",
-                    "data": {
-                        "final_output": result.final_output,
-                        "execution_time": execution_time,
-                    },
-                }
+                # Use GroqAgent streaming
+                async for event in self.groq_agent.run_streamed(
+                    user_input=user_input,
+                    customer_id=customer_id,
+                    conversation_id=conversation_id,
+                    channel=channel,
+                    context=context,
+                ):
+                    yield event
 
                 logger.info(
-                    f"OpenAI agent streaming succeeded [cid: {conversation_id[:8]}]"
+                    f"GroqAgent streaming succeeded [cid: {conversation_id[:8]}]"
                 )
                 return
 
             except Exception as e:
                 logger.warning(
-                    f"OpenAI agent streaming failed: {e} - Falling back to SmartAgent [cid: {conversation_id[:8]}]"
+                    f"GroqAgent streaming failed: {e} - Falling back to SmartAgent [cid: {conversation_id[:8]}]"
                 )
 
                 # Yield fallback indicator
                 yield {
                     "type": "mode",
                     "data": {
-                        "mode": "groq",
+                        "mode": "smart",
                         "status": "fallback",
                         "reason": str(e),
                     },
@@ -291,11 +211,11 @@ class DualModeAgentRouter:
                 )
 
                 # Yield mode indicator (only if not already yielded above)
-                if settings.USE_GROQ or not self.openai_agent:
-                    logger.info(f"Yielding mode event: groq/{mode_type} [cid: {conversation_id[:8]}]")
+                if not settings.USE_GROQ or not self.groq_agent:
+                    logger.info(f"Yielding mode event: smart/{mode_type} [cid: {conversation_id[:8]}]")
                     yield {
                         "type": "mode",
-                        "data": {"mode": "groq", "status": mode_type},
+                        "data": {"mode": "smart", "status": mode_type},
                     }
 
                 # Use SmartAgent streaming

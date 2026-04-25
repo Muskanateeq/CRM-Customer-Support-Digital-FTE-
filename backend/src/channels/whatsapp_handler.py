@@ -63,12 +63,44 @@ class WhatsAppHandler:
             logger.error(f"Failed to initialize Twilio client: {e}", exc_info=True)
             raise
 
+    def _generate_subject_from_message(self, body: str) -> str:
+        """
+        Generate a meaningful subject line from WhatsApp message content.
+
+        Args:
+            body: Message body text
+
+        Returns:
+            Generated subject (max 100 chars)
+        """
+        # Clean the message
+        clean_body = body.strip()
+
+        # Remove media attachment text
+        if '[' in clean_body and 'media attachment' in clean_body:
+            clean_body = clean_body.split('[')[0].strip()
+
+        # Take first 100 chars or first sentence
+        if len(clean_body) <= 100:
+            return clean_body
+
+        # Try to find first sentence
+        for delimiter in ['. ', '! ', '? ', '\n']:
+            if delimiter in clean_body[:100]:
+                subject = clean_body.split(delimiter)[0] + delimiter.strip()
+                if len(subject) <= 100:
+                    return subject
+
+        # Fallback: truncate at 97 chars and add ellipsis
+        return clean_body[:97] + "..."
+
     async def process_incoming_message(
         self,
         from_number: str,
         to_number: str,
         body: str,
         message_sid: str,
+        profile_name: Optional[str] = None,
         media_urls: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
@@ -95,12 +127,16 @@ class WhatsAppHandler:
             customer = await get_customer_by_phone(clean_from)
 
             if not customer:
-                # Create new customer with phone number
-                # Name will be "WhatsApp User" until we get more info
+                # Use ProfileName from Twilio or fallback to phone-based name
+                if profile_name and profile_name.strip():
+                    customer_name = profile_name.strip()
+                else:
+                    customer_name = f"WhatsApp User {clean_from[-4:]}"
+
                 customer_id = await create_customer(
                     email=None,
                     phone=clean_from,
-                    name=f"WhatsApp User {clean_from[-4:]}",
+                    name=customer_name,
                 )
                 logger.info(f"Created new customer: {customer_id}")
             else:
@@ -132,12 +168,19 @@ class WhatsAppHandler:
             else:
                 conversation_id = str(conversation['id'])
 
+            # Generate subject from message content
+            subject = self._generate_subject_from_message(body)
+
             # Prepare metadata
             metadata = {
                 'twilio_message_sid': message_sid,
                 'from_number': clean_from,
                 'to_number': clean_to,
+                'subject': subject,
             }
+
+            if profile_name:
+                metadata['profile_name'] = profile_name
 
             if media_urls:
                 metadata['media_urls'] = media_urls

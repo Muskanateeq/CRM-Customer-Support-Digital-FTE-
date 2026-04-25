@@ -8,15 +8,16 @@ import ProfileDropdown from "./ProfileDropdown";
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin } = useAuth();
 
   // Debug logging
   useEffect(() => {
     console.log('[Navigation] Auth state updated:', {
       user: user ? { id: user.id, email: user.email, name: user.name } : null,
-      isAuthenticated
+      isAuthenticated,
+      isAdmin
     });
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, isAdmin]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,7 +28,10 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const menuItems = [
+  const menuItems = isAdmin ? [
+    { name: "Admin Dashboard", href: "/admin/dashboard" },
+    { name: "Tickets", href: "/admin/tickets" },
+  ] : [
     { name: "Home", href: "/" },
     { name: "Features", href: "/#features" },
     { name: "Support", href: "/support" },

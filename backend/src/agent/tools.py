@@ -1,13 +1,15 @@
 """
 OpenAI Agent Tools - 5 Function Tools for Customer Success FTE
 Each tool integrates with database and follows channel-aware patterns
+
+Note: These are legacy tool definitions. The system now uses:
+- GroqAgentWithTools for Groq-based agents (tools defined inline)
+- SmartAgent for classification-based approach (no tool calling)
 """
 
 import asyncio
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-
-from agents import function_tool, RunContextWrapper
 
 from src.database.client import (
     get_db_connection,
@@ -22,7 +24,6 @@ from src.config import settings
 logger = get_logger(__name__)
 
 
-@function_tool
 async def search_knowledge_base(
     query: str,
     limit: int = 5
@@ -82,13 +83,13 @@ Only escalate if the issue truly requires human intervention (legal matters, ref
         return f"Error searching knowledge base: {str(e)}"
 
 
-@function_tool
 async def create_ticket(
     customer_id: str,
     conversation_id: str,
     subject: str,
     priority: str = "medium",
-    category: str = "general"
+    category: str = "general",
+    channel: str = "webform"
 ) -> str:
     """Create a support ticket for tracking customer issues.
 
@@ -155,22 +156,32 @@ async def create_ticket(
             except Exception as e:
                 logger.warning(f"Failed to publish ticket.created event: {e}")
 
-        return (
+        # Build response with conditional URL
+        response = (
             f"[OK] Support ticket created successfully!\n\n"
             f"Ticket ID: #{ticket_id}\n"
             f"Subject: {subject}\n"
             f"Priority: {priority.upper()}\n"
             f"Category: {category}\n"
             f"Status: Open\n\n"
-            f"Our support team will review this ticket and follow up with you soon."
         )
+
+        # Add tracking URL ONLY for email and WhatsApp
+        if channel in ['email', 'whatsapp']:
+            web_url = settings.FRONTEND_URL
+            ticket_url = f"{web_url}/tickets/{ticket_id}"
+            response += f"Track your ticket at: {ticket_url}\n\n"
+
+        response += "Our support team will review this ticket and follow up with you soon."
+
+        return response
 
     except Exception as e:
         logger.error(f"Ticket creation failed: {e}", exc_info=True)
         return f"Error creating ticket: {str(e)}"
 
 
-@function_tool
+
 async def get_customer_history(
     customer_id: str,
     conversation_id: str,
@@ -242,7 +253,7 @@ async def get_customer_history(
         return f"Error retrieving customer history: {str(e)}"
 
 
-@function_tool
+
 async def escalate_to_human(
     customer_id: str,
     conversation_id: str,
@@ -280,22 +291,100 @@ async def escalate_to_human(
         if urgency not in valid_urgencies:
             urgency = "normal"
 
-        # Create escalation message in database (returns UUID string)
+        # Map urgency to priority
+        priority_map = {
+            "normal": "medium",
+            "high": "high",
+            "critical": "urgent"
+        }
+        priority = priority_map[urgency]
+
+        # Get customer and conversation details
+        async with get_db_connection() as conn:
+            # Get customer info
+            customer = await conn.fetchrow(
+                "SELECT id, email, name, phone FROM customers WHERE id = $1",
+                customer_id
+            )
+
+            if not customer:
+                raise Exception(f"Customer {customer_id} not found")
+
+            # Get conversation info
+            conversation = await conn.fetchrow(
+                "SELECT id, initial_channel FROM conversations WHERE id = $1",
+                conversation_id
+            )
+
+            if not conversation:
+                raise Exception(f"Conversation {conversation_id} not found")
+
+            channel = conversation['initial_channel']
+
+            # Get last customer message as query
+            last_message = await conn.fetchrow(
+                """
+                SELECT content FROM messages
+                WHERE conversation_id = $1 AND role = 'customer'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                conversation_id
+            )
+
+            query = last_message['content'] if last_message else "Customer needs assistance"
+
+            # Create escalated ticket
+            ticket_id = await conn.fetchval(
+                """
+                INSERT INTO tickets (
+                    customer_id, conversation_id, category, priority,
+                    status, source_channel, escalation_reason, escalated_at
+                )
+                VALUES ($1, $2, 'general', $3, 'escalated', $4, $5, NOW())
+                RETURNING id
+                """,
+                customer_id,
+                conversation_id,
+                priority,
+                channel,
+                reason
+            )
+
+            # Generate ticket number
+            ticket_number = f"TKT-{str(ticket_id).replace('-', '').upper()[:8]}"
+
+            logger.info(f"Created escalated ticket {ticket_number}")
+
+        # Create escalation message in database
         message_id = await create_message(
             conversation_id=conversation_id,
             role="system",
-            content=f"🚨 ESCALATED TO HUMAN SUPPORT\nReason: {reason}\nUrgency: {urgency.upper()}",
+            content=f"🚨 ESCALATED TO HUMAN SUPPORT\nTicket: {ticket_number}\nReason: {reason}\nUrgency: {urgency.upper()}",
             channel="system",
             direction="outbound",
-            metadata={"escalation": True, "urgency": urgency, "reason": reason}
+            metadata={"escalation": True, "urgency": urgency, "reason": reason, "ticket_id": str(ticket_id)}
         )
 
-        # In production, this would trigger:
-        # 1. Kafka event to notify human support team
-        # 2. Update conversation status to "escalated"
-        # 3. Assign to available human agent based on urgency
+        # Send notification email to admin
+        try:
+            from src.services.notification_service import send_escalation_notification
 
-        logger.info(f"Escalation recorded", extra={"message_id": message_id})
+            await send_escalation_notification(
+                ticket_id=str(ticket_id),
+                ticket_number=ticket_number,
+                customer_name=customer['name'] or 'Unknown',
+                customer_email=customer['email'] or 'Unknown',
+                customer_phone=customer['phone'],
+                channel=channel,
+                priority=priority,
+                query=query,
+                escalation_reason=reason
+            )
+
+            logger.info(f"Escalation notification sent for ticket {ticket_number}")
+        except Exception as e:
+            logger.error(f"Failed to send escalation notification: {e}", exc_info=True)
 
         # Publish escalation.created event (fire and forget)
         if settings.KAFKA_ENABLED:
@@ -307,21 +396,22 @@ async def escalate_to_human(
                     customer_id=customer_id,
                     reason=reason,
                     urgency=urgency,
-                    channel="system",  # Will be updated with actual channel
+                    channel=channel,
                     trigger="agent_tool",
                 ))
             except Exception as e:
                 logger.warning(f"Failed to publish escalation.created event: {e}")
 
         urgency_messages = {
-            "normal": "A human agent will respond within 2-4 hours.",
-            "high": "A human agent will respond within 30 minutes.",
-            "critical": "A human agent will respond immediately."
+            "normal": "A human agent will respond within 24 hours.",
+            "high": "A human agent will respond within 4 hours.",
+            "critical": "A human agent will respond as soon as possible."
         }
 
         return (
             f"[OK] Your conversation has been escalated to our human support team.\n\n"
-            f"Urgency Level: {urgency.upper()}\n"
+            f"Ticket Number: {ticket_number}\n"
+            f"Priority: {priority.upper()}\n"
             f"Reason: {reason}\n\n"
             f"{urgency_messages[urgency]}\n\n"
             f"Thank you for your patience. We're here to help!"
@@ -332,7 +422,7 @@ async def escalate_to_human(
         return f"Error escalating to human support: {str(e)}"
 
 
-@function_tool
+
 async def send_response(
     conversation_id: str,
     content: str,
