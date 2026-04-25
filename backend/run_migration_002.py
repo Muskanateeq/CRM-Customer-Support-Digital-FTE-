@@ -14,10 +14,9 @@ async def run_migration():
     """Run the migration to add accessTokenExpiresAt column."""
 
     # Get database URL from environment
-    database_url = os.getenv(
-        "DATABASE_URL",
-        "postgresql://***REMOVED***:***REMOVED***@***REMOVED***/neondb?sslmode=require"
-    )
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise ValueError("DATABASE_URL environment variable is required")
 
     print("Connecting to database...")
 
