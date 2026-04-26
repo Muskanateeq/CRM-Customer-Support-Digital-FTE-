@@ -1,0 +1,66 @@
+name: Deploy Backend to Hugging Face
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    name: Deploy to Hugging Face Spaces
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git subtree
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions Bot"
+
+      - name: Deploy to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
+        run: |
+          # Add Hugging Face remote
+          git remote add hf https://user:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME || true
+
+          # Push backend folder to Hugging Face Space
+          git subtree push --prefix=backend hf main || \
+          git push hf `git subtree split --prefix=backend main`:main --force
+
+      - name: Verify Deployment
+        env:
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
+        run: |
+          echo "🚀 Backend deployed to: https://$HF_USERNAME-$HF_SPACE_NAME.hf.space"
+          echo "📊 Check build logs: https://huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME"
+
+          # Wait for deployment to start
+          sleep 10
+
+          # Try to check health endpoint (may fail if build is still in progress)
+          curl -f https://$HF_USERNAME-$HF_SPACE_NAME.hf.space/health || \
+          echo "⚠️ Health check failed - Space may still be building"
+
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "✅ Backend deployment successful!"
+          echo "🌐 URL: https://${{ secrets.HF_USERNAME }}-${{ secrets.HF_SPACE_NAME }}.hf.space"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Backend deployment failed!"
+          echo "📋 Check the logs above for details"

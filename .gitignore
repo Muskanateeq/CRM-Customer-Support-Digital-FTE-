@@ -117,3 +117,9 @@ secrets/
 *.tmp
 *.temp
 .cache
+
+# ============================================
+# Documentation
+# ============================================
+MASTER_DEPLOYMENT_GUIDE.md
+QUICK_START.md

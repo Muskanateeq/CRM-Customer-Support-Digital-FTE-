@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Kubernetes
+k8s/
+
+# Docker
+docker/
+Dockerfile.api
+Dockerfile.worker
+.dockerignore
+docker-compose*.yml
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+*.log
+logs/
+backend_restart.log
+frontend.log
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Scripts (keep only essential ones)
+scripts/test_*.py
+scripts/deploy.sh
+scripts/build_and_push.sh
+
+# Token files (security)
+token.json
+credentials.json
+
+# Lock files (we use requirements.txt)
+uv.lock
+poetry.lock
+Pipfile.lock
+
+# Migration runners (keep migrations folder)
+run_migration*.py
+run_complete_oauth_migration.py
+
+# Development utilities
+check_*.py
+verify_*.py
+demo_*.py
+project_summary.py
+run_all_tests.py
+
+# Kafka setup (not needed in production)
+start_kafka.*
+KAFKA_SETUP.md
+QUICKSTART_KAFKA.md
+docker-compose-kafka.yml
+
+# Setup scripts
+setup_uv.*
