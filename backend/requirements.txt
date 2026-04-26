@@ -61,3 +61,4 @@ cryptography
 python-jose[cryptography]
 python-multipart
 bcrypt
+email-validator
