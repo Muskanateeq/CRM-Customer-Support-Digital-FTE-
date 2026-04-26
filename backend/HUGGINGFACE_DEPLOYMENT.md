@@ -81,7 +81,7 @@ Add each variable one by one:
 ### **Database (Neon PostgreSQL)**
 ```bash
 DATABASE_URL
-postgresql://neondb_owner:npg_6pbM0ZLOvNYm@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
+YOUR_DATABASE_URL_HERE
 
 POSTGRES_HOST
 ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech
