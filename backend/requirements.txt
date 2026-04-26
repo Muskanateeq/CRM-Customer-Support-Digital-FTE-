@@ -2,62 +2,62 @@
 # Phase 1 & 2 Requirements
 
 # Core Framework
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
 
 # OpenAI
-openai==1.12.0    
+openai 
 
 # Database
-asyncpg==0.29.0
-psycopg2-binary==2.9.9
+asyncpg
+psycopg2-binary
 
 # Kafka
-aiokafka==0.10.0
+aiokafka
 
 # Gmail API
-google-auth==2.27.0
-google-auth-oauthlib==1.2.0
-google-auth-httplib2==0.2.0
-google-api-python-client==2.116.0
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
 
 # Twilio WhatsApp
-twilio==8.13.0
+twilio
 
 # Utilities
-python-dotenv==1.0.1
-httpx==0.26.0
-aiohttp==3.9.3
-numpy==1.26.3  # For vector operations and cosine similarity
-pgvector==0.2.4  # PostgreSQL vector extension support
+python-dotenv
+httpx
+aiohttp
+numpy # For vector operations and cosine similarity
+pgvector # PostgreSQL vector extension support
 
 # Testing
-pytest==8.0.0
-pytest-asyncio==0.23.4
-httpx==0.26.0
+pytest
+pytest-asyncio
+httpx
 
 # Load Testing
-locust==2.20.0
+locust
 
 # Monitoring
-prometheus-client==0.19.0
+prometheus-client
 
 # Logging
-structlog==24.1.0
+structlog
 
 # Type Checking
-mypy==1.8.0
+mypy
 
 # Code Quality
-black==24.1.1
-flake8==7.0.0
-isort==5.13.2
+black
+flake8
+isort
 
 # Authentication
-pyjwt==2.8.0
-cryptography==42.0.0
-python-jose[cryptography]==3.3.0
-python-multipart==0.0.9
-bcrypt==4.1.2
+pyjwt
+cryptography
+python-jose[cryptography]
+python-multipart
+bcrypt
