@@ -9,6 +9,7 @@ import {
   HiFilter,
   HiChevronRight,
 } from "react-icons/hi";
+import { getBackendURL } from "@/lib/config";
 
 interface Ticket {
   id: string;
@@ -40,8 +41,9 @@ export default function AdminTicketsPage() {
 
   const checkAuth = async () => {
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/me`,
+        `${backendURL}/api/v1/admin/auth/me`,
         {
           credentials: "include",
         }
@@ -61,7 +63,8 @@ export default function AdminTicketsPage() {
     setError("");
 
     try {
-      let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/tickets/list?limit=50`;
+      const backendURL = getBackendURL();
+      let url = `${backendURL}/api/v1/admin/tickets/list?limit=50`;
 
       if (statusFilter) {
         url += `&status=${statusFilter}`;

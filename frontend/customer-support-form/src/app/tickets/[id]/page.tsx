@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { HiArrowLeft, HiUser, HiMail, HiTag, HiExclamation, HiChatAlt2 } from "react-icons/hi";
+import { getBackendURL } from "@/lib/config";
 
 interface Message {
   id: string;
@@ -49,7 +50,8 @@ export default function TicketDetailPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/${ticketId}`);
+        const backendURL = getBackendURL();
+        const response = await fetch(`${backendURL}/api/v1/tickets/${ticketId}`);
 
         if (!response.ok) {
           if (response.status === 404) {

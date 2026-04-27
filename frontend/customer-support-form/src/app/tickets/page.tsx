@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { HiSearch, HiTicket, HiClock, HiCheckCircle, HiExclamationCircle } from "react-icons/hi";
 import authClient from "@/lib/auth-client";
 import AuthGate from "@/components/AuthGate";
+import { getBackendURL } from "@/lib/config";
 
 interface Ticket {
   id: string;
@@ -85,8 +86,9 @@ export default function TicketsPage() {
     setTickets([]);
 
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/search?q=${encodeURIComponent(searchQuery)}`
+        `${backendURL}/api/v1/tickets/search?q=${encodeURIComponent(searchQuery)}`
       );
 
       if (!response.ok) {

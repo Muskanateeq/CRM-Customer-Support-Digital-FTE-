@@ -10,6 +10,7 @@ import {
   HiLightningBolt,
   HiChevronRight,
 } from "react-icons/hi";
+import { getBackendURL } from "@/lib/config";
 
 interface PopularTopic {
   title: string;
@@ -51,9 +52,11 @@ export default function HelpPage() {
     setError("");
 
     try {
+      const backendURL = getBackendURL();
+
       // Fetch popular topics
       const topicsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/help/popular?limit=5`
+        `${backendURL}/api/v1/tickets/help/popular?limit=5`
       );
 
       if (!topicsResponse.ok) {
@@ -65,7 +68,7 @@ export default function HelpPage() {
 
       // Fetch categories
       const categoriesResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/help/categories`
+        `${backendURL}/api/v1/tickets/help/categories`
       );
 
       if (!categoriesResponse.ok) {
@@ -90,8 +93,9 @@ export default function HelpPage() {
     setError("");
 
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/help/search?q=${encodeURIComponent(categoryName)}`
+        `${backendURL}/api/v1/tickets/help/search?q=${encodeURIComponent(categoryName)}`
       );
 
       if (!response.ok) {

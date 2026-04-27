@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send to backend API
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+    // Send to backend API - uses proxy in production
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8001";
 
     const response = await fetch(`${backendUrl}/api/v1/channels/webform/message`, {
       method: "POST",

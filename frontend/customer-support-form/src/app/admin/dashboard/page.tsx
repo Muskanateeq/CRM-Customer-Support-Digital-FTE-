@@ -11,6 +11,7 @@ import {
   HiLogout,
   HiRefresh,
 } from "react-icons/hi";
+import { getBackendURL } from "@/lib/config";
 
 interface DashboardStats {
   total_escalated: number;
@@ -49,8 +50,9 @@ export default function AdminDashboardPage() {
 
   const checkAuth = async () => {
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/me`,
+        `${backendURL}/api/v1/admin/auth/me`,
         {
           credentials: "include",
         }
@@ -74,9 +76,11 @@ export default function AdminDashboardPage() {
     setError("");
 
     try {
+      const backendURL = getBackendURL();
+
       // Fetch stats
       const statsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/tickets/dashboard/stats`,
+        `${backendURL}/api/v1/admin/tickets/dashboard/stats`,
         {
           credentials: "include",
         }
@@ -91,7 +95,7 @@ export default function AdminDashboardPage() {
 
       // Fetch recent escalated tickets
       const ticketsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/tickets/list?limit=5`,
+        `${backendURL}/api/v1/admin/tickets/list?limit=5`,
         {
           credentials: "include",
         }

@@ -12,6 +12,7 @@ import {
   HiCheckCircle,
   HiPaperAirplane,
 } from "react-icons/hi";
+import { getBackendURL } from "@/lib/config";
 
 interface Message {
   id: string;
@@ -61,8 +62,9 @@ export default function AdminTicketDetailPage() {
 
   const checkAuth = async () => {
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/auth/me`,
+        `${backendURL}/api/v1/admin/auth/me`,
         {
           credentials: "include",
         }
@@ -82,8 +84,9 @@ export default function AdminTicketDetailPage() {
     setError("");
 
     try {
+      const backendURL = getBackendURL();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/tickets/${ticketId}`,
+        `${backendURL}/api/v1/admin/tickets/${ticketId}`,
         {
           credentials: "include",
         }

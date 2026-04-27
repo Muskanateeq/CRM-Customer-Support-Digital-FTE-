@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { HiTicket, HiClock, HiCheckCircle, HiChartBar, HiUser, HiMail, HiRefresh } from "react-icons/hi";
 import authClient from "@/lib/auth-client";
 import AuthGate from "@/components/AuthGate";
+import { getBackendURL } from "@/lib/config";
 
 interface DashboardStats {
   total_tickets: number;
@@ -49,9 +50,11 @@ export default function DashboardPage() {
     setError("");
 
     try {
+      const backendURL = getBackendURL();
+
       // Fetch dashboard stats
       const statsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/dashboard/stats`
+        `${backendURL}/api/v1/tickets/dashboard/stats`
       );
 
       if (!statsResponse.ok) {
@@ -63,7 +66,7 @@ export default function DashboardPage() {
 
       // Fetch recent tickets
       const ticketsResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/tickets/dashboard/recent?limit=5`
+        `${backendURL}/api/v1/tickets/dashboard/recent?limit=5`
       );
 
       if (!ticketsResponse.ok) {

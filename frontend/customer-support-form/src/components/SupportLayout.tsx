@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import ChatInterface from "./ChatInterface";
 import SupportForm from "./SupportForm";
+import { getBackendURL } from "@/lib/config";
 
 interface Message {
   id: string;
@@ -48,10 +49,11 @@ export default function SupportLayout() {
 
     try {
       console.log("=== FETCHING STREAM ===");
-      console.log("Backend URL:", process.env.NEXT_PUBLIC_BACKEND_URL);
+      const backendURL = getBackendURL();
+      console.log("Backend URL:", backendURL);
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/channels/webform/message/stream`,
+        `${backendURL}/api/v1/channels/webform/message/stream`,
         {
           method: "POST",
           headers: {
