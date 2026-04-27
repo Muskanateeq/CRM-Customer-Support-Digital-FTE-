@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # ============================================
     ENVIRONMENT: str = Field(default="development", description="Environment: development, staging, production")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
+    ENABLE_DOCS: bool = Field(default=True, description="Enable Swagger/ReDoc documentation")
 
     # ============================================
     # API Configuration

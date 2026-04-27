@@ -112,8 +112,8 @@ app = FastAPI(
     title="Custora Customer Success FTE API",
     description="24/7 AI-powered customer support across Email, WhatsApp, and Web Form",
     version="2.0.0",
-    docs_url="/docs" if not settings.is_production else None,  # Disable docs in production
-    redoc_url="/redoc" if not settings.is_production else None,
+    docs_url="/docs" if settings.ENABLE_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_DOCS else None,
     lifespan=lifespan
 )
 
@@ -189,7 +189,12 @@ async def request_logging_middleware(request: Request, call_next):
 # CORS middleware for web form
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.is_development else ["https://yourdomain.com"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://custora-tau.vercel.app",
+        "https://dzon-developer-custora-backend.hf.space"
+    ] if not settings.is_development else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

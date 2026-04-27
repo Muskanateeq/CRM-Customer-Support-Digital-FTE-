@@ -6,16 +6,12 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "regions": ["iad1"],
-  "env": {
-    "NEXT_PUBLIC_APP_URL": {
-      "description": "The public URL of your application",
-      "value": "https://your-app.vercel.app"
-    },
-    "NEXT_PUBLIC_BACKEND_URL": {
-      "description": "The URL of your backend API (Hugging Face Space)",
-      "value": "https://your-username-custora-backend.hf.space"
+  "rewrites": [
+    {
+      "source": "/api/backend/:path*",
+      "destination": "https://dzon-developer-custora-backend.hf.space/:path*"
     }
-  },
+  ],
   "headers": [
     {
       "source": "/(.*)",
