@@ -24,6 +24,7 @@ interface Ticket {
   category: string;
   priority: string;
   status: string;
+  source_channel: string;
   created_at: string;
   customer_name: string;
   customer_email: string;
