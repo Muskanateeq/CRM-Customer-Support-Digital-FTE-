@@ -7,6 +7,7 @@
 
 import { betterAuth } from "better-auth";
 import { jwt } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
 import { Pool } from "pg";
 
 // Determine if we're in production
@@ -83,8 +84,9 @@ export const auth = betterAuth({
     },
   },
 
-  // Enable JWT plugin for token generation
+  // Enable JWT plugin and Next.js cookies plugin for token generation
   plugins: [
+    nextCookies(), // Required for Next.js on Vercel
     jwt({
       jwt: {
         // JWT configuration
@@ -109,6 +111,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:3001",
     "https://custora-tau.vercel.app",
+    "https://*.vercel.app", // Wildcard for all Vercel preview deployments
     "https://dzon-developer-custora-backend.hf.space",
     process.env.NEXT_PUBLIC_APP_URL || "",
   ].filter(Boolean),
