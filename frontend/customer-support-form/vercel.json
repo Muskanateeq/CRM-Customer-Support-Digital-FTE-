@@ -9,7 +9,7 @@
   "rewrites": [
     {
       "source": "/api/backend/:path*",
-      "destination": "https://dzon-developer-custora-backend.hf.space/:path*"
+      "destination": "https://crm-customer-support-digital-fte.onrender.com/:path*"
     }
   ],
   "headers": [
