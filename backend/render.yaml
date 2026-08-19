@@ -1,0 +1,95 @@
+services:
+  # Backend API Service
+  - type: web
+    name: custora-backend
+    runtime: python
+    region: oregon  # Change to your preferred region
+    plan: starter  # free, starter, standard, pro
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+
+    envVars:
+      # Environment
+      - key: ENVIRONMENT
+        value: production
+      - key: ENABLE_DOCS
+        value: true
+
+      # Python
+      - key: PYTHON_VERSION
+        value: 3.11.0
+
+      # API Configuration
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        fromService:
+          type: web
+          name: custora-backend
+          property: port
+
+      # Database - Add these in Render Dashboard (Secrets)
+      - key: DATABASE_URL
+        sync: false  # Set manually in dashboard
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        value: 5432
+      - key: POSTGRES_DB
+        sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+
+      # Database Pool
+      - key: DB_POOL_MIN_SIZE
+        value: 2
+      - key: DB_POOL_MAX_SIZE
+        value: 10
+
+      # OpenAI - Set in Dashboard
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AGENT_MODEL
+        value: gpt-4o
+
+      # Kafka (Optional - disable for initial deployment)
+      - key: KAFKA_ENABLED
+        value: false
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        value: localhost:9092
+
+      # Gmail (Optional - disable initially)
+      - key: GMAIL_ENABLED
+        value: false
+      - key: GMAIL_ADDRESS
+        value: support@custora.com
+
+      # WhatsApp (Optional - disable initially)
+      - key: WHATSAPP_ENABLED
+        value: false
+
+      # Web Form (Enable)
+      - key: WEBFORM_ENABLED
+        value: true
+
+      # CORS - Update with your frontend URL
+      - key: API_CORS_ORIGINS
+        value: https://your-frontend.vercel.app,http://localhost:3000
+
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Worker
+      - key: WORKER_POOL_SIZE
+        value: 2
+
+      # Better Auth
+      - key: BETTER_AUTH_SECRET
+        sync: false  # Set manually - min 32 chars
+      - key: BETTER_AUTH_URL
+        sync: false  # Set to your frontend URL

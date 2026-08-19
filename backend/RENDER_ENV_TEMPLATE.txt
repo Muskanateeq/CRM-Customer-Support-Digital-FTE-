@@ -1,0 +1,55 @@
+# COPY THESE TO RENDER ENVIRONMENT VARIABLES
+# Go to: Render Dashboard → Your Service → Environment
+
+# ============================================
+# 1. COPY THIS AUTH SECRET (Generated for you)
+# ============================================
+BETTER_AUTH_SECRET=zvZPqLlg9-UBBBj_PqsTyp12MapBAxoR7iC_6SLUCBs
+
+# ============================================
+# 2. GET FROM NEON DASHBOARD (console.neon.tech)
+# ============================================
+DATABASE_URL=postgresql://[username]:[password]@[host].neon.tech/[database]?sslmode=require
+POSTGRES_HOST=[your-host].neon.tech
+POSTGRES_DB=custora
+POSTGRES_USER=[your-username]
+POSTGRES_PASSWORD=[your-password]
+
+# Example:
+# DATABASE_URL=postgresql://myuser:mypass@ep-cool-sea-12345.us-east-2.aws.neon.tech/custora?sslmode=require
+# POSTGRES_HOST=ep-cool-sea-12345.us-east-2.aws.neon.tech
+# POSTGRES_DB=custora
+# POSTGRES_USER=myuser
+# POSTGRES_PASSWORD=mypass
+
+# ============================================
+# 3. GET FROM OPENAI (platform.openai.com/api-keys)
+# ============================================
+OPENAI_API_KEY=sk-proj-[your-key-here]
+
+# ============================================
+# 4. GET FROM VERCEL (vercel.com/dashboard)
+# ============================================
+BETTER_AUTH_URL=https://[your-project-name].vercel.app
+API_CORS_ORIGINS=https://[your-project-name].vercel.app,http://localhost:3000
+
+# Example:
+# BETTER_AUTH_URL=https://custora-frontend.vercel.app
+# API_CORS_ORIGINS=https://custora-frontend.vercel.app,http://localhost:3000
+
+# ============================================
+# OPTIONAL CHANNELS (Set to false if not using)
+# ============================================
+GMAIL_ENABLED=false
+WHATSAPP_ENABLED=false
+KAFKA_ENABLED=false
+
+# ============================================
+# ALL OTHER VARS ARE SET IN render.yaml
+# You don't need to add these manually:
+# - ENVIRONMENT=production
+# - ENABLE_DOCS=true
+# - API_HOST=0.0.0.0
+# - WEBFORM_ENABLED=true
+# - LOG_LEVEL=INFO
+# ============================================

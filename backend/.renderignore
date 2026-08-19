@@ -1,0 +1,89 @@
+# Don't include these in Render builds
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment files (secrets should be in Render env vars)
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Kubernetes
+k8s/
+
+# Scripts (unless needed for migrations)
+scripts/
+setup_uv.*
+
+# Test files
+test_*.py
+*_test.py
+tests/
+run_all_tests.py
+
+# Project files
+pyproject.toml
+uv.lock
+
+# Credentials (should be env vars)
+credentials.json
+token.json
+*.pem
+*.key
+
+# Logs
+*.log
+backend_restart.log
+frontend.log
+
+# Kafka (if not using)
+docker-compose-kafka.yml
+KAFKA_SETUP.md
+QUICKSTART_KAFKA.md
+start_kafka.*
+
+# Misc
+.claude/
+migrations/
+demo_tools.py
+project_summary.py
+check_*.py
+verify_*.py
+refresh_*.bat
+start_*.bat
