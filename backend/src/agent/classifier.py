@@ -28,7 +28,7 @@ class QueryClassifier:
             base_url="https://api.groq.com/openai/v1",
             api_key=settings.GROQ_API_KEY
         )
-        self.model = "llama-3.3-70b-versatile"
+        self.model = settings.GROQ_MODEL
 
     async def classify(self, user_query: str, conversation_id: str) -> Dict[str, Any]:
         """

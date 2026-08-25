@@ -59,6 +59,14 @@ services:
       - key: AGENT_MODEL
         value: gpt-4o
 
+      # Groq - primary production agent provider
+      - key: USE_GROQ
+        value: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+
       # Kafka (Optional - disable for initial deployment)
       - key: KAFKA_ENABLED
         value: false

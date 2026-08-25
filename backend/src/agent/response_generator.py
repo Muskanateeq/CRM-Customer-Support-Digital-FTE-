@@ -24,7 +24,7 @@ class ResponseGenerator:
             base_url="https://api.groq.com/openai/v1",
             api_key=settings.GROQ_API_KEY
         )
-        self.model = "llama-3.3-70b-versatile"
+        self.model = settings.GROQ_MODEL
 
     async def generate_response(
         self,
@@ -73,9 +73,13 @@ class ResponseGenerator:
             logger.info(f"Response generated successfully [cid: {conversation_id[:8]}]")
             return response
 
-        except Exception as e:
-            logger.error(f"Response generation failed: {e} [cid: {conversation_id[:8]}]")
-            return self._get_fallback_response(channel)
+        except Exception:
+            # Let SmartAgent and the dual-mode router record the provider
+            # failure instead of reporting a fallback template as success.
+            logger.exception(
+                f"Response generation failed [cid: {conversation_id[:8]}]"
+            )
+            raise
 
     async def _generate_scenario_1_response(
         self,

@@ -37,7 +37,7 @@ class GroqAgentWithTools:
             base_url="https://api.groq.com/openai/v1",
             api_key=settings.GROQ_API_KEY
         )
-        self.model = "llama-3.3-70b-versatile"
+        self.model = settings.GROQ_MODEL
         self.tools = self._define_tools()
 
         # Debug logging

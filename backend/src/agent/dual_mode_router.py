@@ -80,6 +80,9 @@ class DualModeAgentRouter:
                     context=context,
                 )
 
+                if result.get("error"):
+                    raise RuntimeError(result["error"])
+
                 # Calculate execution time
                 execution_time = (datetime.utcnow() - start_time).total_seconds()
 
@@ -115,6 +118,8 @@ class DualModeAgentRouter:
                     channel=channel,
                     context=context,
                 )
+                if result.get("error"):
+                    raise RuntimeError(result["error"])
                 logger.info(
                     f"SmartAgent succeeded [cid: {conversation_id[:8]}]"
                 )

@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"API Host: {settings.API_HOST}:{settings.API_PORT}")
     logger.info(f"Database: {settings.POSTGRES_HOST}/{settings.POSTGRES_DB}")
     logger.info(f"OpenAI Model: {settings.AGENT_MODEL}")
+    logger.info(f"Groq Model: {settings.GROQ_MODEL}")
     logger.info("Channels Enabled:")
     logger.info(f"  - Email (Gmail): {settings.GMAIL_ENABLED}")
     logger.info(f"  - WhatsApp (Twilio): {settings.WHATSAPP_ENABLED}")
@@ -362,6 +363,7 @@ async def lifespan(app: FastAPI):
         f"Database: {settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
     )
     logger.info(f"OpenAI Model: {settings.AGENT_MODEL}")
+    logger.info(f"Groq Model: {settings.GROQ_MODEL}")
     logger.info("Channels Enabled:")
     logger.info(f"  - Email (Gmail): {settings.GMAIL_ENABLED}")
     logger.info(f"  - WhatsApp (Twilio): {settings.WHATSAPP_ENABLED}")

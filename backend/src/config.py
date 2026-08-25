@@ -57,7 +57,10 @@ class Settings(BaseSettings):
     # ============================================
     USE_GROQ: bool = Field(default=False, description="Use Groq instead of OpenAI")
     GROQ_API_KEY: Optional[str] = Field(default=None, description="Groq API key")
-    # Groq models: llama-3.3-70b-versatile, llama-3.1-70b-versatile, mixtral-8x7b-32768
+    GROQ_MODEL: str = Field(
+        default="openai/gpt-oss-120b",
+        description="Supported Groq chat model",
+    )
 
     # ============================================
     # Kafka Settings
