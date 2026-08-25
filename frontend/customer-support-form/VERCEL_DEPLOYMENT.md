@@ -59,7 +59,7 @@ Click **"Environment Variables"** section and add the following:
 ### **Database (Neon PostgreSQL)**
 ```bash
 # Variable Name: DATABASE_URL
-# Value: postgresql://neondb_owner:npg_6pbM0ZLOvNYm@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
+# Value: postgresql://neondb_owner:<redacted-neon-password>@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 ### **Better Auth**

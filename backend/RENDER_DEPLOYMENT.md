@@ -52,7 +52,7 @@ POSTGRES_DB=custora
 POSTGRES_USER=your-user
 POSTGRES_PASSWORD=your-password
 OPENAI_API_KEY=sk-your-openai-key
-BETTER_AUTH_SECRET=your-secret-min-32-chars-long
+BETTER_AUTH_SECRET=<generate-and-store-in-dashboard>
 BETTER_AUTH_URL=https://your-frontend.vercel.app
 ```
 

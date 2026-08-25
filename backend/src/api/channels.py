@@ -4,6 +4,7 @@ Integrates channel handlers with OpenAI agent
 """
 
 import json
+import secrets
 from typing import Optional, Dict, Any, AsyncIterator
 from datetime import datetime
 
@@ -23,11 +24,26 @@ from src.kafka.helpers import (
     publish_agent_execution_completed,
 )
 from src.config import settings
+from src.services.channel_jobs import (
+    enqueue_channel_job,
+    register_channel_job_handler,
+)
 
 logger = get_logger(__name__)
 
 # Create router
 router = APIRouter(prefix="/api/v1/channels", tags=["channels"])
+
+
+def _require_email_poll_secret(provided_secret: Optional[str]) -> None:
+    """Authenticate the internal Gmail poller with a timing-safe comparison."""
+    configured_secret = settings.EMAIL_POLL_SECRET
+    if not configured_secret:
+        logger.error("EMAIL_POLL_SECRET is not configured")
+        raise HTTPException(status_code=503, detail="Email polling is not securely configured")
+
+    if not provided_secret or not secrets.compare_digest(provided_secret, configured_secret):
+        raise HTTPException(status_code=403, detail="Invalid email poll credentials")
 
 
 # ============================================
@@ -332,7 +348,6 @@ async def webform_message_stream_endpoint(
 @router.post("/whatsapp/webhook")
 async def whatsapp_webhook_endpoint(
     request: Request,
-    background_tasks: BackgroundTasks,
     x_twilio_signature: Optional[str] = Header(None),
 ) -> Dict[str, str]:
     """
@@ -346,17 +361,20 @@ async def whatsapp_webhook_endpoint(
         form_data = await request.form()
         params = dict(form_data)
 
-        logger.info(f"WhatsApp webhook received from {params.get('From')}")
+        logger.info("WhatsApp webhook received")
 
         # Validate webhook signature (security)
         handler = get_whatsapp_handler()
 
-        # In production, validate signature
-        # if x_twilio_signature:
-        #     url = str(request.url)
-        #     if not handler.validate_webhook_signature(url, params, x_twilio_signature):
-        #         logger.warning("Invalid Twilio webhook signature")
-        #         raise HTTPException(status_code=403, detail="Invalid signature")
+        if settings.TWILIO_VALIDATE_SIGNATURES:
+            if not x_twilio_signature:
+                logger.warning("Twilio webhook rejected: missing signature")
+                raise HTTPException(status_code=403, detail="Missing Twilio signature")
+
+            webhook_url = settings.TWILIO_WEBHOOK_URL or str(request.url)
+            if not handler.validate_webhook_signature(webhook_url, params, x_twilio_signature):
+                logger.warning("Twilio webhook rejected: invalid signature")
+                raise HTTPException(status_code=403, detail="Invalid Twilio signature")
 
         # Extract message data
         message_sid = params.get('MessageSid')
@@ -364,7 +382,13 @@ async def whatsapp_webhook_endpoint(
         to_number = params.get('To')
         body = params.get('Body', '')
         profile_name = params.get('ProfileName')  # Sender's WhatsApp profile name
-        num_media = int(params.get('NumMedia', 0))
+        try:
+            num_media = int(params.get('NumMedia', 0))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid NumMedia value") from exc
+
+        if not message_sid or not from_number or not to_number:
+            raise HTTPException(status_code=400, detail="Missing required Twilio message fields")
 
         # Get media URLs if any
         media_urls = []
@@ -373,20 +397,26 @@ async def whatsapp_webhook_endpoint(
             if media_url:
                 media_urls.append(media_url)
 
-        # Process message in background
-        background_tasks.add_task(
-            process_whatsapp_message,
-            from_number=from_number,
-            to_number=to_number,
-            body=body,
-            message_sid=message_sid,
-            profile_name=profile_name,
-            media_urls=media_urls if media_urls else None,
+        job = await enqueue_channel_job(
+            channel="whatsapp",
+            external_message_id=message_sid,
+            payload={
+                "from_number": from_number,
+                "to_number": to_number,
+                "body": body,
+                "message_sid": message_sid,
+                "profile_name": profile_name,
+                "media_urls": media_urls if media_urls else None,
+            },
         )
 
-        # Return empty TwiML response (acknowledge receipt)
-        return {"status": "received"}
+        return {
+            "status": "queued" if job["created"] else "duplicate",
+            "job_id": job["job_id"],
+        }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"WhatsApp webhook processing failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -463,6 +493,9 @@ async def process_whatsapp_message(
             body=agent_result['final_output'],
         )
 
+        if not success:
+            raise RuntimeError("Twilio failed to send the WhatsApp response")
+
         # Publish message.sent event
         if settings.KAFKA_ENABLED:
             await publish_message_sent(
@@ -492,6 +525,7 @@ async def process_whatsapp_message(
 
     except Exception as e:
         logger.error(f"Failed to process WhatsApp message in background: {e}", exc_info=True)
+        raise
 
 
 # ============================================
@@ -499,13 +533,17 @@ async def process_whatsapp_message(
 # ============================================
 
 @router.post("/email/poll")
-async def email_poll_endpoint(background_tasks: BackgroundTasks) -> Dict[str, Any]:
+async def email_poll_endpoint(
+    x_email_poll_secret: Optional[str] = Header(None),
+) -> Dict[str, Any]:
     """
     Poll Gmail for new emails and process them.
 
     This endpoint should be called periodically (e.g., every 30 seconds)
     by a cron job or scheduler.
     """
+    _require_email_poll_secret(x_email_poll_secret)
+
     try:
         logger.info("Email polling triggered")
 
@@ -524,19 +562,34 @@ async def email_poll_endpoint(background_tasks: BackgroundTasks) -> Dict[str, An
 
         logger.info(f"Found {len(emails)} new emails")
 
-        # Process each email in background
+        queued = 0
+        duplicates = 0
         for email_data in emails:
-            background_tasks.add_task(
-                process_email_message,
-                email_data=email_data,
+            gmail_message_id = email_data.get("message_id")
+            if not gmail_message_id:
+                logger.error("Skipping Gmail message without a message ID")
+                continue
+
+            job = await enqueue_channel_job(
+                channel="email",
+                external_message_id=gmail_message_id,
+                payload=email_data,
             )
+            if job["created"]:
+                queued += 1
+            else:
+                duplicates += 1
 
         return {
             "status": "success",
             "emails_found": len(emails),
-            "message": f"Processing {len(emails)} emails"
+            "emails_queued": queued,
+            "duplicates": duplicates,
+            "message": f"Queued {queued} email(s)"
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Email polling failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -589,6 +642,12 @@ async def process_email_message(email_data: Dict[str, Any]) -> None:
             in_reply_to=email_data.get('email_message_id'),  # For proper threading
         )
 
+        if not success:
+            raise RuntimeError("Gmail failed to send the email response")
+
+        if handler.service:
+            handler._mark_as_read(email_data['message_id'])
+
         # Publish message.sent event
         if settings.KAFKA_ENABLED:
             await publish_message_sent(
@@ -618,6 +677,19 @@ async def process_email_message(email_data: Dict[str, Any]) -> None:
 
     except Exception as e:
         logger.error(f"Failed to process email in background: {e}", exc_info=True)
+        raise
+
+
+async def _process_whatsapp_job(payload: Dict[str, Any]) -> None:
+    await process_whatsapp_message(**payload)
+
+
+async def _process_email_job(payload: Dict[str, Any]) -> None:
+    await process_email_message(email_data=payload)
+
+
+register_channel_job_handler("whatsapp", _process_whatsapp_job)
+register_channel_job_handler("email", _process_email_job)
 
 
 # ============================================

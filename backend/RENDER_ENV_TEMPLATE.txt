@@ -2,9 +2,9 @@
 # Go to: Render Dashboard → Your Service → Environment
 
 # ============================================
-# 1. COPY THIS AUTH SECRET (Generated for you)
+# 1. GENERATE A NEW AUTH SECRET (minimum 32 characters)
 # ============================================
-BETTER_AUTH_SECRET=zvZPqLlg9-UBBBj_PqsTyp12MapBAxoR7iC_6SLUCBs
+BETTER_AUTH_SECRET=<generate-and-store-only-in-render-and-vercel>
 
 # ============================================
 # 2. GET FROM NEON DASHBOARD (console.neon.tech)
@@ -38,10 +38,21 @@ API_CORS_ORIGINS=https://[your-project-name].vercel.app,http://localhost:3000
 # API_CORS_ORIGINS=https://custora-frontend.vercel.app,http://localhost:3000
 
 # ============================================
-# OPTIONAL CHANNELS (Set to false if not using)
+# CHANNEL SECURITY
 # ============================================
-GMAIL_ENABLED=false
-WHATSAPP_ENABLED=false
+GMAIL_ENABLED=true
+GMAIL_ADDRESS=custora.support@gmail.com
+GMAIL_CREDENTIALS_JSON=<gmail-oauth-client-json>
+GMAIL_TOKEN_JSON=<gmail-oauth-token-json>
+EMAIL_POLL_SECRET=<generate-a-random-32-plus-character-secret>
+
+WHATSAPP_ENABLED=true
+TWILIO_ACCOUNT_SID=<twilio-account-sid>
+TWILIO_AUTH_TOKEN=<twilio-auth-token>
+TWILIO_WHATSAPP_NUMBER=<e164-whatsapp-number>
+TWILIO_WEBHOOK_URL=https://crm-customer-support-digital-fte.onrender.com/api/v1/channels/whatsapp/webhook
+TWILIO_VALIDATE_SIGNATURES=true
+
 KAFKA_ENABLED=false
 
 # ============================================

@@ -28,6 +28,7 @@ twilio
 
 # Utilities
 python-dotenv
+requests>=2.32.0
 httpx
 aiohttp
 numpy # For vector operations and cosine similarity

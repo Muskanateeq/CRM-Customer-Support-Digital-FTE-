@@ -38,7 +38,7 @@ POSTGRES_PASSWORD=your_password
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
 
 # Auth Secret (generate random 32+ chars)
-BETTER_AUTH_SECRET=generate_a_random_32_character_string_here_use_password_generator
+BETTER_AUTH_SECRET=<generate-and-store-in-dashboard>
 
 # Frontend URL (from Vercel)
 BETTER_AUTH_URL=https://your-frontend-app.vercel.app

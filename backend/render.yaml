@@ -7,6 +7,7 @@ services:
     plan: starter  # free, starter, standard, pro
     branch: main
     buildCommand: pip install -r requirements.txt
+    preDeployCommand: python run_channel_security_migration.py
     startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
 
@@ -62,15 +63,31 @@ services:
       - key: KAFKA_BOOTSTRAP_SERVERS
         value: localhost:9092
 
-      # Gmail (Optional - disable initially)
+      # Gmail
       - key: GMAIL_ENABLED
-        value: false
+        value: true
       - key: GMAIL_ADDRESS
-        value: support@custora.com
+        value: custora.support@gmail.com
+      - key: GMAIL_CREDENTIALS_JSON
+        sync: false
+      - key: GMAIL_TOKEN_JSON
+        sync: false
+      - key: EMAIL_POLL_SECRET
+        sync: false
 
-      # WhatsApp (Optional - disable initially)
+      # WhatsApp
       - key: WHATSAPP_ENABLED
-        value: false
+        value: true
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: TWILIO_WEBHOOK_URL
+        value: https://crm-customer-support-digital-fte.onrender.com/api/v1/channels/whatsapp/webhook
+      - key: TWILIO_VALIDATE_SIGNATURES
+        value: true
 
       # Web Form (Enable)
       - key: WEBFORM_ENABLED
@@ -78,7 +95,7 @@ services:
 
       # CORS - Update with your frontend URL
       - key: API_CORS_ORIGINS
-        value: https://your-frontend.vercel.app,http://localhost:3000
+        value: https://custora-tau.vercel.app,http://localhost:3000
 
       # Logging
       - key: LOG_LEVEL
@@ -87,6 +104,8 @@ services:
       # Worker
       - key: WORKER_POOL_SIZE
         value: 2
+      - key: CHANNEL_JOB_WORKER_ENABLED
+        value: true
 
       # Better Auth
       - key: BETTER_AUTH_SECRET

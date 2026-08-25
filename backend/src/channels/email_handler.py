@@ -25,6 +25,7 @@ from src.database.client import (
     create_conversation,
     get_active_conversation,
     create_message,
+    get_inbound_message_by_channel_id,
 )
 
 logger = get_logger(__name__)
@@ -246,7 +247,21 @@ class GmailHandler:
             Processing result with customer_id and conversation_id
         """
         try:
-            logger.info(f"Processing email from {email_data['from']}")
+            logger.info("Processing inbound email")
+
+            existing = await get_inbound_message_by_channel_id(
+                channel="email",
+                channel_message_id=email_data["message_id"],
+            )
+            if existing:
+                logger.info("Skipping duplicate inbound Gmail message")
+                return {
+                    "customer_id": str(existing["customer_id"]),
+                    "conversation_id": str(existing["conversation_id"]),
+                    "message_id": str(existing["message_id"]),
+                    "email_data": email_data,
+                    "duplicate": True,
+                }
 
             # Get or create customer
             customer = await get_customer_by_email(email_data['from'])
@@ -303,15 +318,12 @@ class GmailHandler:
                 'message_id': message_id
             })
 
-            # Mark email as read
-            if self.service:
-                self._mark_as_read(email_data['message_id'])
-
             return {
                 'customer_id': customer_id,
                 'conversation_id': conversation_id,
                 'message_id': message_id,
                 'email_data': email_data,
+                'duplicate': False,
             }
 
         except Exception as e:
@@ -356,7 +368,7 @@ class GmailHandler:
             return False
 
         try:
-            logger.info(f"Sending email to {to_email}")
+            logger.info("Sending Gmail response")
 
             # Create message with proper headers
             message = MIMEText(body, 'plain', 'utf-8')

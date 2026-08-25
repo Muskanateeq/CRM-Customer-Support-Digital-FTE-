@@ -3,7 +3,6 @@ Email Polling Script for Custora AI
 Polls Gmail API every 30 seconds for new customer emails
 """
 
-import asyncio
 import sys
 import os
 from pathlib import Path
@@ -15,6 +14,12 @@ sys.path.insert(0, str(backend_path))
 import requests
 import time
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv(backend_path / ".env")
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001").rstrip("/")
+EMAIL_POLL_SECRET = os.getenv("EMAIL_POLL_SECRET")
 
 
 def poll_emails():
@@ -23,7 +28,8 @@ def poll_emails():
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Polling for new emails...")
 
         response = requests.post(
-            "http://localhost:8001/api/v1/channels/email/poll",
+            f"{BACKEND_URL}/api/v1/channels/email/poll",
+            headers={"X-Email-Poll-Secret": EMAIL_POLL_SECRET or ""},
             timeout=30
         )
 
@@ -48,11 +54,14 @@ def poll_emails():
 
 def main():
     """Main polling loop."""
+    if not EMAIL_POLL_SECRET:
+        raise RuntimeError("EMAIL_POLL_SECRET is required")
+
     print("=" * 60)
     print("Custora AI - Email Polling Service")
     print("=" * 60)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Backend URL: http://localhost:8001")
+    print(f"Backend URL: {BACKEND_URL}")
     print(f"Poll interval: 30 seconds")
     print("=" * 60)
     print("\nPress Ctrl+C to stop\n")

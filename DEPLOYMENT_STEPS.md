@@ -35,10 +35,10 @@ NEXT_PUBLIC_APP_URL=https://custora.vercel.app
 BETTER_AUTH_URL=https://custora.vercel.app
 
 # Database (Keep same as before)
-DATABASE_URL=postgresql://neondb_owner:npg_6pbM0ZLOvNYm@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:<redacted-neon-password>@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
 
 # Better Auth Secret (Keep same)
-BETTER_AUTH_SECRET=YzYuynKxZ5ch2RNZCXMusrwMscgZ95df
+BETTER_AUTH_SECRET=<generate-and-store-in-dashboard>
 
 # OAuth (Keep your existing values from .env.local)
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -99,12 +99,12 @@ ENVIRONMENT=production
 PYTHON_VERSION=3.11.0
 
 # Database (from your Neon)
-DATABASE_URL=postgresql://neondb_owner:npg_6pbM0ZLOvNYm@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:<redacted-neon-password>@ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require
 POSTGRES_HOST=ep-lively-heart-aimqvdi0-pooler.c-4.us-east-1.aws.neon.tech
 POSTGRES_PORT=5432
 POSTGRES_DB=neondb
 POSTGRES_USER=neondb_owner
-POSTGRES_PASSWORD=npg_6pbM0ZLOvNYm
+POSTGRES_PASSWORD=<redacted-neon-password>
 PROJECT_ID=ep-lively-heart-aimqvdi0
 
 # OpenAI
@@ -112,7 +112,7 @@ OPENAI_API_KEY=your-openai-key
 AGENT_MODEL=gpt-4o
 
 # Auth
-BETTER_AUTH_SECRET=zvZPqLlg9-UBBBj_PqsTyp12MapBAxoR7iC_6SLUCBs
+BETTER_AUTH_SECRET=<generate-and-store-in-dashboard>
 
 # Channels
 WEBFORM_ENABLED=true

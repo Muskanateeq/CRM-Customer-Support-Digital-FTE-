@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: Optional[str] = Field(default="custora.admin.support@gmail.com", description="Admin email for escalation notifications")
     GMAIL_CREDENTIALS_JSON: Optional[str] = Field(default=None, description="Gmail OAuth credentials")
     GMAIL_TOKEN_JSON: Optional[str] = Field(default=None, description="Gmail OAuth token")
+    EMAIL_POLL_SECRET: Optional[str] = Field(default=None, description="Shared secret required by the Gmail poll endpoint")
     GOOGLE_PUBSUB_TOPIC: Optional[str] = Field(default=None, description="Google Pub/Sub topic")
     GOOGLE_PUBSUB_SUBSCRIPTION: Optional[str] = Field(default=None, description="Pub/Sub subscription")
 
@@ -84,6 +85,8 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: Optional[str] = Field(default=None, description="Twilio account SID")
     TWILIO_AUTH_TOKEN: Optional[str] = Field(default=None, description="Twilio auth token")
     TWILIO_WHATSAPP_NUMBER: Optional[str] = Field(default=None, description="Twilio WhatsApp number")
+    TWILIO_WEBHOOK_URL: Optional[str] = Field(default=None, description="Canonical public Twilio webhook URL used for signature validation")
+    TWILIO_VALIDATE_SIGNATURES: bool = Field(default=True, description="Validate all inbound Twilio webhook signatures")
     WHATSAPP_ENABLED: bool = Field(default=True, description="Enable WhatsApp channel")
 
     # ============================================
@@ -111,6 +114,9 @@ class Settings(BaseSettings):
     # Worker Configuration
     # ============================================
     WORKER_POOL_SIZE: int = Field(default=4, ge=1, le=20, description="Worker pool size")
+    CHANNEL_JOB_WORKER_ENABLED: bool = Field(default=True, description="Process durable inbound channel jobs in the API service")
+    CHANNEL_JOB_POLL_INTERVAL_SECONDS: float = Field(default=1.0, ge=0.1, le=60.0, description="Delay between durable channel job polls")
+    CHANNEL_JOB_STALE_AFTER_SECONDS: int = Field(default=300, ge=30, le=3600, description="Reclaim processing jobs after this many seconds")
 
     # ============================================
     # Better Auth Configuration

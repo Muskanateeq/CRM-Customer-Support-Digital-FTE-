@@ -417,7 +417,7 @@ DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 # ============================================
 # Better Auth - REQUIRED
 # ============================================
-BETTER_AUTH_SECRET=your-random-secret-key-here-min-32-chars
+BETTER_AUTH_SECRET=<generate-and-store-in-dashboard>
 BETTER_AUTH_URL=http://localhost:3000
 
 # ============================================

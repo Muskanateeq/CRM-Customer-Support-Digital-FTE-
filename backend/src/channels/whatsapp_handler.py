@@ -21,6 +21,7 @@ from src.database.client import (
     create_conversation,
     get_active_conversation,
     create_message,
+    get_inbound_message_by_channel_id,
 )
 
 logger = get_logger(__name__)
@@ -117,11 +118,26 @@ class WhatsAppHandler:
             Processing result with customer_id and conversation_id
         """
         try:
+            existing = await get_inbound_message_by_channel_id(
+                channel="whatsapp",
+                channel_message_id=message_sid,
+            )
+            if existing:
+                logger.info("Skipping duplicate inbound Twilio message")
+                return {
+                    "customer_id": str(existing["customer_id"]),
+                    "conversation_id": str(existing["conversation_id"]),
+                    "message_id": str(existing["message_id"]),
+                    "from_number": from_number.replace("whatsapp:", ""),
+                    "body": body,
+                    "duplicate": True,
+                }
+
             # Remove 'whatsapp:' prefix from phone numbers
             clean_from = from_number.replace('whatsapp:', '')
             clean_to = to_number.replace('whatsapp:', '')
 
-            logger.info(f"Processing WhatsApp message from {clean_from}")
+            logger.info("Processing inbound WhatsApp message")
 
             # Get or create customer by phone
             customer = await get_customer_by_phone(clean_from)
@@ -209,6 +225,7 @@ class WhatsAppHandler:
                 'message_id': message_id,
                 'from_number': clean_from,
                 'body': body,
+                'duplicate': False,
             }
 
         except Exception as e:

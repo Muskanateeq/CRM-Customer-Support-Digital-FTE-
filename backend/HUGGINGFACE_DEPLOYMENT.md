@@ -93,7 +93,7 @@ POSTGRES_USER
 neondb_owner
 
 POSTGRES_PASSWORD
-npg_6pbM0ZLOvNYm
+<redacted-neon-password>
 
 POSTGRES_PORT
 5432

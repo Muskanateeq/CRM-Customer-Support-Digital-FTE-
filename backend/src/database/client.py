@@ -336,6 +336,32 @@ async def create_message(
         return str(message_id)
 
 
+async def get_inbound_message_by_channel_id(
+    channel: str,
+    channel_message_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Return an existing inbound message and its customer context."""
+    async with get_db_connection() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT
+                m.id AS message_id,
+                m.conversation_id,
+                c.customer_id
+            FROM messages m
+            JOIN conversations c ON c.id = m.conversation_id
+            WHERE m.channel = $1
+              AND m.direction = 'inbound'
+              AND m.channel_message_id = $2
+            ORDER BY m.created_at ASC
+            LIMIT 1
+            """,
+            channel,
+            channel_message_id,
+        )
+        return dict(row) if row else None
+
+
 # ============================================
 # Ticket Queries
 # ============================================
