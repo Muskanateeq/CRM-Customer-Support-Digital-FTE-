@@ -1,5 +1,6 @@
 """Regression tests for production agent provider selection and fallback."""
 
+from types import SimpleNamespace
 from typing import Any, Dict
 
 import pytest
@@ -70,3 +71,94 @@ async def test_response_generator_does_not_hide_provider_errors(
             user_query="What is Python?",
             conversation_id="conversation-1",
         )
+
+
+@pytest.mark.asyncio
+async def test_response_generator_retries_truncated_completion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "GROQ_MAX_COMPLETION_TOKENS", 1024)
+    generator = ResponseGenerator()
+    calls = []
+
+    async def fake_create(**kwargs: Any) -> Any:
+        calls.append(kwargs)
+        if len(calls) == 1:
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        finish_reason="length",
+                        message=SimpleNamespace(content="Incomplete answer"),
+                    )
+                ]
+            )
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    finish_reason="stop",
+                    message=SimpleNamespace(content="Complete answer."),
+                )
+            ]
+        )
+
+    monkeypatch.setattr(generator.client.chat.completions, "create", fake_create)
+
+    result = await generator._create_completion(
+        [{"role": "user", "content": "Answer completely"}]
+    )
+
+    assert result == "Complete answer."
+    assert calls[0]["max_completion_tokens"] == 1024
+    assert calls[1]["max_completion_tokens"] == 2048
+
+
+@pytest.mark.asyncio
+async def test_streaming_agent_continues_after_length_finish(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "GROQ_MAX_COMPLETION_TOKENS", 1024)
+
+    def stream_chunk(content: str, finish_reason: str | None = None) -> Any:
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(content=content, tool_calls=None),
+                    finish_reason=finish_reason,
+                )
+            ]
+        )
+
+    async def first_stream():
+        yield stream_chunk("First half ")
+        yield stream_chunk("", "length")
+
+    async def second_stream():
+        yield stream_chunk("second half.")
+        yield stream_chunk("", "stop")
+
+    streams = [first_stream(), second_stream()]
+
+    async def fake_create(**_: Any) -> Any:
+        return streams.pop(0)
+
+    agent = object.__new__(GroqAgentWithTools)
+    agent.model = "openai/gpt-oss-120b"
+    agent.tools = []
+    agent.client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=fake_create),
+        )
+    )
+
+    events = [
+        event
+        async for event in agent.run_streamed(
+            user_input="Help me",
+            customer_id="customer-1",
+            conversation_id="conversation-1",
+        )
+    ]
+
+    final_event = next(event for event in events if event["type"] == "final")
+    assert final_event["data"]["final_output"] == "First half second half."

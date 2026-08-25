@@ -53,7 +53,10 @@ class QueryClassifier:
                     {"role": "user", "content": classification_prompt}
                 ],
                 temperature=0,  # Deterministic classification
-                max_tokens=300
+                max_completion_tokens=1024,
+                reasoning_effort=settings.GROQ_REASONING_EFFORT,
+                response_format={"type": "json_object"},
+                extra_body={"include_reasoning": False},
             )
 
             response_text = response.choices[0].message.content.strip()

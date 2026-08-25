@@ -26,6 +26,48 @@ class ResponseGenerator:
         )
         self.model = settings.GROQ_MODEL
 
+    async def _create_completion(
+        self,
+        messages: List[Dict[str, str]],
+    ) -> str:
+        """Generate one complete answer and retry if the provider truncates it."""
+        token_budget = settings.GROQ_MAX_COMPLETION_TOKENS
+
+        for attempt in range(2):
+            request_messages = list(messages)
+            if attempt:
+                request_messages[-1] = {
+                    **request_messages[-1],
+                    "content": (
+                        request_messages[-1]["content"]
+                        + "\n\nCRITICAL: Regenerate the entire response. It must be "
+                        "complete, end naturally, and include every required closing "
+                        "sentence. Never stop mid-sentence or mid-list."
+                    ),
+                }
+
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=request_messages,
+                temperature=0.6,
+                max_completion_tokens=token_budget,
+                reasoning_effort=settings.GROQ_REASONING_EFFORT,
+                extra_body={"include_reasoning": False},
+            )
+
+            choice = response.choices[0]
+            content = (choice.message.content or "").strip()
+            if content and choice.finish_reason != "length":
+                return content
+
+            logger.warning(
+                "Groq response reached its completion limit; retrying with a "
+                "larger budget"
+            )
+            token_budget = min(token_budget * 2, 8192)
+
+        raise RuntimeError("Groq returned an incomplete response twice")
+
     async def generate_response(
         self,
         scenario: str,
@@ -130,7 +172,10 @@ Generate a helpful, professional response that:
 
 2. **Provide clear next steps or solutions**
    - Tell them exactly what to do
-   - Include relevant links or instructions
+   - Include links only when they exist in the knowledge base
+   - Never invent product names, bundles, prices, policies, or URLs
+   - If exact catalog data is unavailable, give safe general guidance and
+     clearly say that specific availability must be checked in the store catalog
 
 3. **Mention the tracking ticket at the END**
    - Format: "I've created tracking ticket #{ticket_id} for your reference."
@@ -144,23 +189,25 @@ Generate a helpful, professional response that:
 5. **Keep it concise but complete**
    - Maximum 200 words
    - Focus on solving their problem
+   - Make headings, step counts, and numbered lists internally consistent
+   - End every response naturally; never stop mid-sentence or mid-list
+
+6. **Use clean Markdown formatting**
+   - Use **bold** only for important headings or key actions
+   - Use numbered or bullet lists where they improve readability
+   - Do not use Markdown tables or raw HTML
 
 ---
 
 RESPONSE:
 """
 
-        response = await self.client.chat.completions.create(
-            model=self.model,
+        return await self._create_completion(
             messages=[
                 {"role": "system", "content": "You are Custora AI, a professional ecommerce customer support agent. Be helpful, clear, and concise."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
+            ]
         )
-
-        return response.choices[0].message.content.strip()
 
     async def _generate_scenario_2_response(
         self,
@@ -225,17 +272,12 @@ IMPORTANT:
 RESPONSE:
 """
 
-        response = await self.client.chat.completions.create(
-            model=self.model,
+        return await self._create_completion(
             messages=[
                 {"role": "system", "content": "You are Custora AI. Politely redirect out-of-scope queries without solving them."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=400
+            ]
         )
-
-        return response.choices[0].message.content.strip()
 
     async def _generate_scenario_3_response(
         self,
@@ -309,17 +351,12 @@ Generate an empathetic escalation response that:
 RESPONSE:
 """
 
-        response = await self.client.chat.completions.create(
-            model=self.model,
+        return await self._create_completion(
             messages=[
                 {"role": "system", "content": "You are Custora AI. Provide empathetic escalation responses that reassure customers."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=300
+            ]
         )
-
-        return response.choices[0].message.content.strip()
 
     def _get_fallback_response(self, channel: str) -> str:
         """Get fallback response when generation fails."""

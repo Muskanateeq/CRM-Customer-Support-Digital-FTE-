@@ -195,11 +195,14 @@ class GroqAgentWithTools:
                     messages=messages,
                     tools=self.tools,
                     tool_choice="auto",
-                    temperature=0.7,  # Balanced for natural responses
-                    max_tokens=1000
+                    temperature=0.6,
+                    max_completion_tokens=settings.GROQ_MAX_COMPLETION_TOKENS,
+                    reasoning_effort=settings.GROQ_REASONING_EFFORT,
+                    extra_body={"include_reasoning": False},
                 )
 
-                assistant_message = response.choices[0].message
+                choice = response.choices[0]
+                assistant_message = choice.message
 
                 # Check if tool calls are needed
                 if assistant_message.tool_calls:
@@ -247,7 +250,25 @@ class GroqAgentWithTools:
 
                 else:
                     # No more tools needed, this is the final response
-                    final_response = assistant_message.content
+                    content = assistant_message.content or ""
+                    final_response = (final_response or "") + content
+                    if choice.finish_reason == "length":
+                        logger.warning(
+                            "Groq response reached its completion limit; "
+                            "requesting the remaining content"
+                        )
+                        messages.extend([
+                            {"role": "assistant", "content": content},
+                            {
+                                "role": "user",
+                                "content": (
+                                    "Continue exactly where the response stopped. "
+                                    "Return only the missing continuation and finish "
+                                    "the response naturally."
+                                ),
+                            },
+                        ])
+                        continue
                     break
 
             # If we exhausted iterations without final response
@@ -333,8 +354,10 @@ class GroqAgentWithTools:
                     messages=messages,
                     tools=self.tools,
                     tool_choice="auto",
-                    temperature=0.7,
-                    max_tokens=1000,
+                    temperature=0.6,
+                    max_completion_tokens=settings.GROQ_MAX_COMPLETION_TOKENS,
+                    reasoning_effort=settings.GROQ_REASONING_EFFORT,
+                    extra_body={"include_reasoning": False},
                     stream=True
                 )
 
@@ -342,9 +365,15 @@ class GroqAgentWithTools:
                 current_content = ""
                 tool_calls_data = []
                 current_tool_call = None
+                finish_reason = None
 
                 async for chunk in stream:
-                    delta = chunk.choices[0].delta
+                    if not chunk.choices:
+                        continue
+                    choice = chunk.choices[0]
+                    delta = choice.delta
+                    if choice.finish_reason:
+                        finish_reason = choice.finish_reason
 
                     # Text content streaming
                     if delta.content:
@@ -445,7 +474,24 @@ class GroqAgentWithTools:
 
                 else:
                     # No more tools needed, this is the final response
-                    final_response = current_content
+                    final_response += current_content
+                    if finish_reason == "length":
+                        logger.warning(
+                            "Streaming Groq response reached its completion limit; "
+                            "requesting the remaining content"
+                        )
+                        messages.extend([
+                            {"role": "assistant", "content": current_content},
+                            {
+                                "role": "user",
+                                "content": (
+                                    "Continue exactly where the response stopped. "
+                                    "Return only the missing continuation and finish "
+                                    "the response naturally."
+                                ),
+                            },
+                        ])
+                        continue
                     break
 
             # If we exhausted iterations without final response

@@ -66,6 +66,10 @@ services:
         sync: false
       - key: GROQ_MODEL
         value: openai/gpt-oss-120b
+      - key: GROQ_MAX_COMPLETION_TOKENS
+        value: 4096
+      - key: GROQ_REASONING_EFFORT
+        value: low
 
       # Kafka (Optional - disable for initial deployment)
       - key: KAFKA_ENABLED

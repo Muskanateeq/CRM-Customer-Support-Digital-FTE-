@@ -14,6 +14,8 @@ When responding via EMAIL:
 - Include proper greeting and signature
 - Provide detailed explanations
 - Use bullet points for lists
+- Use Markdown bold only for important headings; it will be converted to HTML
+- Always end with a complete closing and signature
 - Maximum length: 1000 words
 """,
     "whatsapp": """
@@ -29,7 +31,8 @@ When responding via WHATSAPP:
 When responding via WEB FORM:
 - Use semi-formal, helpful tone
 - Structure responses clearly
-- Use markdown formatting (bold, lists, links)
+- Use clean Markdown formatting (bold headings, lists, valid links)
+- Never leave unmatched Markdown markers or stop mid-sentence
 - Provide actionable next steps
 - Maximum length: 500 words
 """

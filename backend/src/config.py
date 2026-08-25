@@ -61,6 +61,16 @@ class Settings(BaseSettings):
         default="openai/gpt-oss-120b",
         description="Supported Groq chat model",
     )
+    GROQ_MAX_COMPLETION_TOKENS: int = Field(
+        default=4096,
+        ge=1024,
+        le=8192,
+        description="Completion budget including GPT-OSS reasoning tokens",
+    )
+    GROQ_REASONING_EFFORT: str = Field(
+        default="low",
+        description="GPT-OSS reasoning effort: low, medium, or high",
+    )
 
     # ============================================
     # Kafka Settings

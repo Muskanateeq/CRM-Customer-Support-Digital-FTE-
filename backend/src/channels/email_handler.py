@@ -18,6 +18,7 @@ from googleapiclient.errors import HttpError
 
 from src.config import settings
 from src.utils.logging import get_logger
+from src.utils.message_formatting import markdown_to_html, markdown_to_plain_text
 from src.database.client import (
     get_customer_by_email,
     create_customer,
@@ -370,8 +371,13 @@ class GmailHandler:
         try:
             logger.info("Sending Gmail response")
 
-            # Create message with proper headers
-            message = MIMEText(body, 'plain', 'utf-8')
+            # Send both a clean plain-text fallback and a formatted HTML body.
+            # Raw model Markdown is never exposed to the recipient.
+            message = MIMEMultipart('alternative')
+            message.attach(
+                MIMEText(markdown_to_plain_text(body), 'plain', 'utf-8')
+            )
+            message.attach(MIMEText(markdown_to_html(body), 'html', 'utf-8'))
             message['To'] = to_email
             message['From'] = f"Custora AI Support <{settings.GMAIL_ADDRESS}>"
             message['Subject'] = subject if not thread_id else f"Re: {subject}"

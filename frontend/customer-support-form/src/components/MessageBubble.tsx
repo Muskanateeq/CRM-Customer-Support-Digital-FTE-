@@ -2,11 +2,86 @@
 
 import { motion } from "framer-motion";
 import { HiUser, HiChip } from "react-icons/hi";
+import type { ReactNode } from "react";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
+}
+
+const INLINE_MARKDOWN = /(\*\*.+?\*\*|\*[^*\n]+?\*|\[[^\]\n]+\]\([^)\n]+\))/g;
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  return text.split(INLINE_MARKDOWN).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
+    }
+
+    const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (link) {
+      const [, label, url] = link;
+      if (url.startsWith("https://") || url.startsWith("http://")) {
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-300 underline underline-offset-2 hover:text-blue-200"
+          >
+            {label}
+          </a>
+        );
+      }
+      return <span key={index}>{label}</span>;
+    }
+
+    // Do not expose unmatched Markdown control characters in chat bubbles.
+    return <span key={index}>{part.replaceAll("**", "").replaceAll("*", "")}</span>;
+  });
+}
+
+function FormattedAssistantMessage({ content }: { content: string }) {
+  return (
+    <div className="space-y-2 text-sm leading-relaxed break-words">
+      {content.split(/\r?\n/).map((rawLine, index) => {
+        const line = rawLine.trim();
+        if (!line) return <div key={index} className="h-1" />;
+
+        const heading = line.match(/^#{1,6}\s+(.+)$/);
+        if (heading) {
+          return <p key={index} className="font-semibold text-white">{renderInlineMarkdown(heading[1])}</p>;
+        }
+
+        const bullet = line.match(/^[-*]\s+(.+)$/);
+        if (bullet) {
+          return (
+            <div key={index} className="flex items-start gap-2 pl-1">
+              <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-300" />
+              <p>{renderInlineMarkdown(bullet[1])}</p>
+            </div>
+          );
+        }
+
+        const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
+        if (numbered) {
+          return (
+            <div key={index} className="flex items-start gap-2">
+              <span className="min-w-5 font-semibold text-blue-300">{numbered[1]}.</span>
+              <p>{renderInlineMarkdown(numbered[2])}</p>
+            </div>
+          );
+        }
+
+        return <p key={index}>{renderInlineMarkdown(line)}</p>;
+      })}
+    </div>
+  );
 }
 
 export default function MessageBubble({ role, content, timestamp }: MessageBubbleProps) {
@@ -44,7 +119,11 @@ export default function MessageBubble({ role, content, timestamp }: MessageBubbl
                 : "glass text-[#F8FAFC] rounded-bl-sm"
             }`}
           >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{content}</p>
+            {isUser ? (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{content}</p>
+            ) : (
+              <FormattedAssistantMessage content={content} />
+            )}
           </div>
 
           {/* Timestamp */}
