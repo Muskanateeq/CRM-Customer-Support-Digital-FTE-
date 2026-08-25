@@ -7,6 +7,8 @@ services:
     plan: starter  # free, starter, standard, pro
     branch: main
     buildCommand: pip install -r requirements.txt
+    # Paid Render services run this before deploy. The application also applies
+    # this idempotent migration at startup, which covers free/manual services.
     preDeployCommand: python run_channel_security_migration.py
     startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health

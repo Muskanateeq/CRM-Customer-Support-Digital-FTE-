@@ -275,6 +275,7 @@ from src.database.client import (
     close_db_pool,
     check_db_health,
 )
+from src.database.migrations import ensure_channel_jobs_schema
 from src.utils.logging import (
     setup_logging,
     set_correlation_id,
@@ -309,6 +310,10 @@ async def run_email_polling_loop():
     from scripts.poll_emails import poll_emails
 
     logger.info("[OK] Gmail polling background task started")
+
+    # Lifespan tasks are scheduled just before uvicorn begins accepting HTTP
+    # requests. Give the local server a moment to bind before the first poll.
+    await asyncio.sleep(1)
 
     while True:
         try:
@@ -367,6 +372,11 @@ async def lifespan(app: FastAPI):
         # Initialize database connection pool.
         await init_db_pool()
         logger.info("[OK] Database pool initialized")
+
+        # The durable worker must never start before its queue table exists.
+        # Run this idempotent migration here as a fallback for Render services
+        # where a pre-deploy command is unavailable or not configured.
+        await ensure_channel_jobs_schema()
 
         # Import channel handlers.
         from src.channels.email_handler import get_gmail_handler
@@ -653,7 +663,7 @@ async def global_exception_handler(
 # Core Endpoints
 # ============================================
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     """
     Root endpoint with service information.

@@ -18,8 +18,19 @@ from dotenv import load_dotenv
 
 load_dotenv(backend_path / ".env")
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001").rstrip("/")
 EMAIL_POLL_SECRET = os.getenv("EMAIL_POLL_SECRET")
+
+
+def get_backend_url() -> str:
+    """Return the configured API URL or this service's local Render URL."""
+    configured_url = os.getenv("BACKEND_URL")
+    if configured_url:
+        return configured_url.rstrip("/")
+
+    # Render injects PORT for web services. The local development default is
+    # the same port used by the backend's uvicorn configuration.
+    port = os.getenv("PORT", "8000")
+    return f"http://127.0.0.1:{port}"
 
 
 def poll_emails():
@@ -28,7 +39,7 @@ def poll_emails():
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Polling for new emails...")
 
         response = requests.post(
-            f"{BACKEND_URL}/api/v1/channels/email/poll",
+            f"{get_backend_url()}/api/v1/channels/email/poll",
             headers={"X-Email-Poll-Secret": EMAIL_POLL_SECRET or ""},
             timeout=30
         )
@@ -61,7 +72,7 @@ def main():
     print("Custora AI - Email Polling Service")
     print("=" * 60)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Backend URL: {BACKEND_URL}")
+    print(f"Backend URL: {get_backend_url()}")
     print(f"Poll interval: 30 seconds")
     print("=" * 60)
     print("\nPress Ctrl+C to stop\n")
