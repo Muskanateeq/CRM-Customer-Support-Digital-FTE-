@@ -1,4 +1,4 @@
-# Custora - AI-Powered Customer Support Platform
+# Custora - (AI Powered Customer Support Platform)
 
 > **Digital Full-Time Employee (FTE)** for E-commerce Customer Support - Automated, Intelligent, 24/7
 
